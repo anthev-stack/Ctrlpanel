@@ -1,0 +1,96 @@
+{
+    "name": "cpgg/dashboard",
+    "type": "project",
+    "description": "A billing and control panel made for Pterodactyl.",
+    "keywords": [
+        "framework",
+        "laravel"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-curl": "*",
+        "ext-intl": "*",
+        "ext-mysqli": "*",
+        "biscolab/laravel-recaptcha": "^6.1",
+        "coderflex/laravel-turnstile": "^2.1",
+        "doctrine/dbal": "^4.0.4",
+        "guzzlehttp/guzzle": "^7.5",
+        "hidehalo/nanoid-php": "^1.1.12",
+        "josiasmontag/laravel-recaptchav3": "^1.0",
+        "kkomelin/laravel-translatable-string-exporter": "^1.22",
+        "laravel/framework": "^11.32",
+        "laravel/tinker": "^2.10",
+        "laravel/ui": "^4.5.2",
+        "laraveldaily/laravel-invoices": "^4.0.0",
+        "league/flysystem-aws-s3-v3": "^3.28.0",
+        "paypal/paypal-checkout-sdk": "^1.0.2",
+        "predis/predis": "*",
+        "qirolab/laravel-themer": "^2.3.3",
+        "socialiteproviders/discord": "^4.1.2",
+        "spatie/laravel-activitylog": "^4.9",
+        "spatie/laravel-permission": "^6.10",
+        "spatie/laravel-query-builder": "^6.2",
+        "spatie/laravel-settings": "^3.4",
+        "spatie/laravel-validation-rules": "^3.4.0",
+        "stripe/stripe-php": "^7.128",
+        "symfony/http-client": "^7.1.8",
+        "symfony/intl": "^7.1.8",
+        "symfony/mailgun-mailer": "^7.1.6",
+        "yajra/laravel-datatables-oracle": "^11.1"
+    },
+    "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.13",
+        "fakerphp/faker": "^1.21",
+        "laravel/sail": "^1.31",
+        "mockery/mockery": "^1.5.1",
+        "nunomaduro/collision": "^8.3",
+        "phpunit/phpunit": "^11.2",
+        "spatie/laravel-ignition": "^2.8"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "process-timeout": 900,
+        "sort-packages": true,
+        "platform": {
+            "php": "8.2"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": [
+                "biscolab/laravel-recaptcha"
+            ]
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ]
+    }
+}
