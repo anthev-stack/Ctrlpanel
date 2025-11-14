@@ -6,7 +6,6 @@ use App\Models\Product;
 use App\Models\Pterodactyl\Egg;
 use App\Models\Pterodactyl\Nest;
 use App\Models\Pterodactyl\Node;
-use App\Models\Product;
 use App\Models\Server;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
