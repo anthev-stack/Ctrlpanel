@@ -81,7 +81,10 @@
                 <template x-for="plan in plans" :key="plan.slug">
                     <div class="card pricing-card" :class="{'featured': selectedPlan === plan.slug}">
                         <h3 x-text="plan.name"></h3>
-                        <p class="price" x-text="plan.price_display"></p>
+                        <p class="price">
+                            <span class="credit-price" x-text="formatCredits(plan.price) + ' credits'"></span>
+                            <span class="price-sub" x-text="formatAud(plan.price) + ' / ' + plan.billing_period"></span>
+                        </p>
                         <ul>
                             <li x-text="planBaseRamLabel(plan) + ' · ' + planBaseSlotsLabel(plan)"></li>
                             <li x-text="plan.description"></li>
@@ -176,13 +179,16 @@
                         <span>Memory</span>
                         <strong x-text="ramLabel()"></strong>
                     </div>
-                    <div class="summary-line">
-                        <span>Player Slots</span>
-                        <strong x-text="slotLabel()"></strong>
-                    </div>
-                    <div class="summary-total">
+                <div class="summary-line">
+                    <span>Player Slots</span>
+                    <strong x-text="slotLabel()"></strong>
+                </div>
+                <div class="summary-total">
                         <span>Total</span>
-                        <span x-text="formatCredits(totalPrice) + ' credits / month'"></span>
+                    <div class="text-right">
+                        <strong x-text="formatCredits(totalPrice) + ' credits / ' + billingPeriodLabel()"></strong>
+                        <small class="text-muted d-block" x-text="summaryAudLabel()"></small>
+                    </div>
                     </div>
                     <p class="mt-2 text-muted" style="font-size: 0.9rem;">
                         Final provisioning and billing happens inside our secure client area.
@@ -352,7 +358,7 @@
                     if (!plan || this.ramSteps === 0) return 'Using base memory allocation.';
                     const extra = this.ramSteps * plan.memory_increment_mb;
                     const cost = this.ramSteps * (plan.memory_increment_price || 0);
-                    return `+${this.formatMemory(extra)} · +${this.formatCredits(cost)} credits`;
+                    return `+${this.formatMemory(extra)} · +${this.formatCredits(cost)} credits · ≈ ${this.formatAud(cost)}`;
                 },
 
                 slotLabel() {
@@ -367,12 +373,12 @@
                     if (!plan || this.slotSteps === 0) return 'Using base player slots.';
                     const extra = this.slotSteps * plan.slot_increment_step;
                     const cost = this.slotSteps * (plan.slot_increment_price || 0);
-                    return `+${extra} slots · +${this.formatCredits(cost)} credits`;
+                    return `+${extra} slots · +${this.formatCredits(cost)} credits · ≈ ${this.formatAud(cost)}`;
                 },
 
                 locationLabel() {
                     const location = this.findLocation(this.selectedLocation);
-                    return location ? location.name : '—';
+                    return location ? this.formatLocationOption(location) : '—';
                 },
 
                 planBaseRamLabel(plan) {
@@ -409,6 +415,25 @@
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
                     });
+                },
+
+                creditsToAudNumber(value) {
+                    return Number(value || 0) / 100;
+                },
+
+                formatAud(value) {
+                    return '$' + this.creditsToAudNumber(value).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }) + ' AUD';
+                },
+
+                summaryAudLabel() {
+                    return '≈ ' + this.formatAud(this.totalPrice) + ' / ' + this.billingPeriodLabel();
+                },
+
+                billingPeriodLabel() {
+                    return this.currentPlan ? this.currentPlan.billing_period : 'month';
                 },
 
                 collectLocations(plans) {

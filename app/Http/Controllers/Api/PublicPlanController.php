@@ -19,21 +19,28 @@ class PublicPlanController extends Controller
                 ->orderBy('name')
                 ->get()
                 ->map(function (Product $product) {
+                    $priceCredits = $this->convertToCredits($product->price);
+                    $memoryIncrementCredits = $this->convertToCredits($product->memory_increment_price);
+                    $slotIncrementCredits = $this->convertToCredits($product->slot_increment_price);
+
                     return [
                         'id' => $product->id,
                         'slug' => Str::slug($product->name),
                         'name' => $product->name,
                         'description' => $product->description,
-                        'price' => $this->convertToCredits($product->price),
+                        'price' => $priceCredits,
+                        'price_aud' => $this->convertCreditsToAud($priceCredits),
                         'price_display' => $product->display_price,
                         'billing_period' => $product->billing_period,
                         'memory_mb' => (int)$product->memory,
                         'memory_increment_mb' => (int)$product->memory_increment_mb,
-                        'memory_increment_price' => $this->convertToCredits($product->memory_increment_price),
+                        'memory_increment_price' => $memoryIncrementCredits,
+                        'memory_increment_price_aud' => $this->convertCreditsToAud($memoryIncrementCredits),
                         'memory_increment_max_steps' => (int)$product->memory_increment_max_steps,
                         'player_slots' => (int)$product->player_slots,
                         'slot_increment_step' => (int)$product->slot_increment_step,
-                        'slot_increment_price' => $this->convertToCredits($product->slot_increment_price),
+                        'slot_increment_price' => $slotIncrementCredits,
+                        'slot_increment_price_aud' => $this->convertCreditsToAud($slotIncrementCredits),
                         'slot_increment_max_steps' => (int)$product->slot_increment_max_steps,
                         'base_ram_gb' => round(($product->memory ?? 0) / 1024, 2),
                         'locations' => $product->nodes->map(function ($node) {
@@ -60,6 +67,11 @@ class PublicPlanController extends Controller
         }
 
         return (int) round($amount / 1000);
+    }
+
+    private function convertCreditsToAud(int $credits): float
+    {
+        return round($credits / 100, 2);
     }
 }
 

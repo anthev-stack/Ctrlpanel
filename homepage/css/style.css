@@ -344,12 +344,20 @@ a {
 .price {
     font-size: 2.25rem;
     font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
-.price span {
-    font-size: 1rem;
-    color: var(--muted);
-    margin-left: 0.35rem;
+.credit-price {
+    font-size: 2rem;
+}
+
+.price-sub {
+    font-size: 0.95rem;
+    color: rgba(226, 232, 240, 0.75);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .pricing-card ul {
