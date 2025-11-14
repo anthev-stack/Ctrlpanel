@@ -193,12 +193,86 @@
                                   {{ __('There seem to be no nodes available for this specification. Admins have been notified. Please try again later of contact us.') }}
                                 </div>
                               </template>
+
+                              <!-- Resource Configuration Panel -->
+                              <template x-if="selectedProductObject && selectedProductObject.id">
+                                <div class="mt-4 pt-4 border-top">
+                                    <h5 class="mb-3">{{ __('Resource Configuration') }}</h5>
+                                    
+                                    <template x-if="hasMemoryIncrements()">
+                                        <div class="mb-4">
+                                            <label class="d-flex justify-content-between align-items-center">
+                                                <span>{{ __('Memory') }}</span>
+                                                <span class="badge badge-light" x-text="formatMemory(calculatedMemoryMb())"></span>
+                                            </label>
+                                            <input type="range" min="0"
+                                                   :max="selectedProductObject.memory_increment_max_steps ?? 0"
+                                                   :disabled="!hasMemoryIncrements()"
+                                                   step="1"
+                                                   class="custom-range"
+                                                   x-model.number="memoryStepCount"
+                                                   @input="updateCalculatedPrice">
+                                            <small class="form-text text-muted" x-text="memoryIncrementDescription()"></small>
+                                        </div>
+                                    </template>
+                                    <template x-if="!hasMemoryIncrements()">
+                                        <p class="text-muted mb-3">
+                                            {{ __('Memory is fixed at') }}
+                                            <strong x-text="formatMemory(parseInt(selectedProductObject.memory ?? 0))"></strong>
+                                        </p>
+                                    </template>
+
+                                    <template x-if="hasSlotIncrements()">
+                                        <div class="mb-4">
+                                            <label class="d-flex justify-content-between align-items-center">
+                                                <span>{{ __('Player Slots') }}</span>
+                                                <span class="badge badge-light" x-text="calculatedSlots()"></span>
+                                            </label>
+                                            <input type="range" min="0"
+                                                   :max="selectedProductObject.slot_increment_max_steps ?? 0"
+                                                   :disabled="!hasSlotIncrements()"
+                                                   step="1"
+                                                   class="custom-range"
+                                                   x-model.number="slotStepCount"
+                                                   @input="updateCalculatedPrice">
+                                            <small class="form-text text-muted" x-text="slotIncrementDescription()"></small>
+                                        </div>
+                                    </template>
+                                    <template x-if="!hasSlotIncrements()">
+                                        <p class="text-muted mb-3">
+                                            {{ __('Player slots are fixed at') }}
+                                            <strong x-text="selectedProductObject.player_slots ?? 0"></strong>
+                                        </p>
+                                    </template>
+
+                                    <div class="p-3 mb-3 border rounded bg-light">
+                                        <div class="d-flex justify-content-between">
+                                            <span>{{ __('Total Price') }}</span>
+                                            <strong x-text="formatCredits(calculatedPrice) + ' {{ $credits_display_name }}'"></strong>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ __('Base price') }}:
+                                            <span x-text="selectedProductObject.display_price + ' {{ $credits_display_name }}'"></span>
+                                        </small>
+                                    </div>
+
+                                    <div class="alert alert-warning" x-show="!hasEnoughCredits()">
+                                        {{ __('You need more credits for this configuration.') }}
+                                    </div>
+
+                                    <button type="button" class="btn btn-primary btn-block"
+                                            :disabled="submitClicked || !isFormValid() || !hasEnoughCredits()"
+                                            @click="submitServer">
+                                        {{ __('Create server') }}
+                                    </button>
+                                </div>
+                              </template>
                         </div>
                     </div>
                 </div>
 
                 <div class="w-100"></div>
-              <div class="col" x-show="selectedLocation != null" x-data="{
+              <div class="col-xl-6 col-lg-8 col-md-8 col-sm-10" x-show="selectedLocation != null" x-data="{
                                       billingPeriodTranslations: {
                                           'monthly': '{{ __('per Month') }}',
                                           'half-annually': '{{ __('per 6 Months') }}',
@@ -209,9 +283,9 @@
                                           'hourly': '{{ __('per Hour') }}'
                                       }
                                   }">
-                    <div class="mt-4 row justify-content-center">
+                    <div class="mt-4">
                         <template x-for="product in products" :key="product.id">
-                            <div class="ml-2 mr-2 card col-xl-3 col-lg-3 col-md-4 col-sm-10 ">
+                            <div class="mb-3 card">
                                 <div class="card-body d-flex flex-column">
                                   <div class="d-flex justify-content-between align-items-center">
                                     <!-- Product Name -->
@@ -302,14 +376,14 @@
                                             :class="(product.minimum_credits > user.credits && product.price > user.credits) ||
                                                 product.doesNotFit == true ||
                                                 submitClicked ? 'disabled' : ''"
-                                            class="mt-2 btn btn-primary btn-block" @click="selectProduct(product.id)"
+                                            class="mt-2 btn btn-primary btn-block" @click="selectProductAndSubmit(product.id)"
                                                 x-text="product.doesNotFit == true
                                                     ? '{{ __('Server cant fit on this Location') }}'
                                                     : (product.servers_count >= product.serverlimit && product.serverlimit != 0
                                                         ? '{{ __('Max. Servers with configuration reached') }}'
                                                         : (product.minimum_credits > user.credits && product.price > user.credits
                                                             ? '{{ __('Not enough') }} {{ $credits_display_name }}!'
-                                                            : (selectedProduct === product.id ? '{{ __('Selected') }}' : '{{ __('Select') }}')))">
+                                                            : '{{ __('Create server') }}'))">
                                         </button>
                                         @if (env('APP_ENV') == 'local' || $store_enabled)
                                         <template x-if="product.price > user.credits || product.minimum_credits > user.credits">
@@ -328,95 +402,6 @@
                     </div>
                 </div>
 
-                <div class="mt-4 row justify-content-center">
-                    <div class="card col-xl-4 col-lg-5 col-md-6 col-sm-10" id="configuration-panel">
-                        <div class="card-body">
-                            <template x-if="!selectedProductObject || !selectedProductObject.id">
-                                <p class="text-center text-muted mb-0">
-                                    {{ __('Select a product above to configure RAM, slots, and pricing details.') }}
-                                </p>
-                            </template>
-                            <template x-if="selectedProductObject && selectedProductObject.id">
-                                <div>
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h4 class="mb-0" x-text="selectedProductObject.name"></h4>
-                                        <span class="badge badge-secondary"
-                                              x-text="formatCredits(calculatedPrice) + ' {{ $credits_display_name }}'"></span>
-                                    </div>
-
-                                    <div class="mb-3 text-muted" x-text="selectedProductObject.description"></div>
-
-                                    <template x-if="hasMemoryIncrements()">
-                                        <div class="mb-4">
-                                            <label class="d-flex justify-content-between align-items-center">
-                                                <span>{{ __('Memory') }}</span>
-                                                <span class="badge badge-light" x-text="formatMemory(calculatedMemoryMb())"></span>
-                                            </label>
-                                            <input type="range" min="0"
-                                                   :max="selectedProductObject.memory_increment_max_steps ?? 0"
-                                                   :disabled="!hasMemoryIncrements()"
-                                                   step="1"
-                                                   class="custom-range"
-                                                   x-model.number="memoryStepCount"
-                                                   @input="updateCalculatedPrice">
-                                            <small class="form-text text-muted" x-text="memoryIncrementDescription()"></small>
-                                        </div>
-                                    </template>
-                                    <template x-if="!hasMemoryIncrements()">
-                                        <p class="text-muted">
-                                            {{ __('Memory is fixed at') }}
-                                            <strong x-text="formatMemory(parseInt(selectedProductObject.memory ?? 0))"></strong>
-                                        </p>
-                                    </template>
-
-                                    <template x-if="hasSlotIncrements()">
-                                        <div class="mb-4">
-                                            <label class="d-flex justify-content-between align-items-center">
-                                                <span>{{ __('Player Slots') }}</span>
-                                                <span class="badge badge-light" x-text="calculatedSlots()"></span>
-                                            </label>
-                                            <input type="range" min="0"
-                                                   :max="selectedProductObject.slot_increment_max_steps ?? 0"
-                                                   :disabled="!hasSlotIncrements()"
-                                                   step="1"
-                                                   class="custom-range"
-                                                   x-model.number="slotStepCount"
-                                                   @input="updateCalculatedPrice">
-                                            <small class="form-text text-muted" x-text="slotIncrementDescription()"></small>
-                                        </div>
-                                    </template>
-                                    <template x-if="!hasSlotIncrements()">
-                                        <p class="text-muted">
-                                            {{ __('Player slots are fixed at') }}
-                                            <strong x-text="selectedProductObject.player_slots ?? 0"></strong>
-                                        </p>
-                                    </template>
-
-                                    <div class="p-3 mb-3 border rounded bg-light">
-                                        <div class="d-flex justify-content-between">
-                                            <span>{{ __('Total Price') }}</span>
-                                            <strong x-text="formatCredits(calculatedPrice) + ' {{ $credits_display_name }}'"></strong>
-                                        </div>
-                                        <small class="text-muted">
-                                            {{ __('Base price') }}:
-                                            <span x-text="selectedProductObject.display_price + ' {{ $credits_display_name }}'"></span>
-                                        </small>
-                                    </div>
-
-                                    <div class="alert alert-warning" x-show="!hasEnoughCredits()">
-                                        {{ __('You need more credits for this configuration.') }}
-                                    </div>
-
-                                    <button type="button" class="btn btn-primary btn-block"
-                                            :disabled="submitClicked || !isFormValid() || !hasEnoughCredits()"
-                                            @click="submitServer">
-                                        {{ __('Create server') }}
-                                    </button>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
 
                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="product" id="product" x-model="selectedProduct">
@@ -502,7 +487,33 @@
                     this.selectedProduct = productId;
                     this.updateSelectedObjects();
                     this.resetIncrements();
-                    this.scrollToConfigurator();
+                },
+                selectProductAndSubmit(productId) {
+                    if (!productId) return;
+                    this.selectedProduct = productId;
+                    this.updateSelectedObjects();
+                    this.resetIncrements();
+                    
+                    // Wait for product object to update, then submit
+                    this.$nextTick(() => {
+                        if (!this.isFormValid()) return;
+
+                        const emptyVars = this.hasEmptyRequiredVariables(this.selectedEggObject.environment);
+                        if (emptyVars.length > 0) {
+                            this.dispatchModal(emptyVars);
+                            return;
+                        }
+
+                        if (!this.hasEnoughCredits()) {
+                            alert('{{ __('You do not have enough credits for this configuration.') }}');
+                            return;
+                        }
+
+                        document.getElementById('product').value = productId;
+                        document.querySelector('input[name="memory_increment_steps"]').value = this.memoryStepCount;
+                        document.querySelector('input[name="slot_increment_steps"]').value = this.slotStepCount;
+                        document.getElementById('serverForm').submit();
+                    });
                 },
                 submitServer() {
                     if (!this.selectedProduct) return;
@@ -774,15 +785,6 @@
 
                 hasEnoughCredits() {
                     return this.user.credits >= this.calculatedPrice;
-                },
-
-                scrollToConfigurator() {
-                    this.$nextTick(() => {
-                        const panel = document.getElementById('configuration-panel');
-                        if (panel) {
-                            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    });
                 },
 
                 dispatchModal(variables) {
