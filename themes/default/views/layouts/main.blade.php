@@ -79,16 +79,17 @@
         <ul class="ml-auto navbar-nav">
 
             @php
-                $creditBalanceRaw = Auth::user()->credits ?? 0;
-                $creditBalanceFormatted = Currency::formatForDisplay($creditBalanceRaw);
-                $creditBalanceCredits = $creditBalanceRaw / 1000;
-                $creditBalanceAud = number_format($creditBalanceCredits / 100, 2);
+                $generalSettings = app(\App\Settings\GeneralSettings::class);
+                $creditsDisplayName = $generalSettings->credits_display_name ?? 'Credits';
+                $creditBalanceFormatted = Currency::formatForDisplay(Auth::user()->credits);
+                $creditBalanceRaw = (float) Currency::formatForForm(Auth::user()->credits, 2);
+                $creditBalanceAud = number_format($creditBalanceRaw / 100, 2);
             @endphp
             <li class="nav-item dropdown">
                 <a class="px-2 nav-link" href="#" id="userDropdown" role="button" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
                         <span class="mr-1 text-gray-600 d-lg-inline">
-                            <small><i class="mr-2 fas fa-coins"></i></small>{{ $creditBalanceFormatted }}
+                            <small><i class="mr-2 fas fa-coins"></i></small>{{ $creditBalanceFormatted }} {{ $creditsDisplayName }}
                             <small class="text-muted d-block" style="font-size: 0.75rem;">≈ ${{ $creditBalanceAud }} AUD</small>
                         </span>
                 </a>
