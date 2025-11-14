@@ -51,6 +51,7 @@ class ProductController extends Controller
     {
         $this->checkPermission(self::WRITE_PERMISSION);
         return view('admin.products.create', [
+            'product' => null,
             'locations' => Location::with('nodes')->get(),
             'nests' => Nest::with('eggs')->get(),
             'credits_display_name' => $general_settings->credits_display_name
