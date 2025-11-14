@@ -78,38 +78,34 @@
         <!-- Right navbar links -->
         <ul class="ml-auto navbar-nav">
 
-            @auth
-                @php
-                    $generalSettings = app(\App\Settings\GeneralSettings::class);
-                    $creditsDisplayName = $generalSettings->credits_display_name ?? 'Credits';
-                    $creditBalanceRaw = Auth::user()->credits ?? 0;
-                    $creditBalanceFormatted = Currency::formatForDisplay($creditBalanceRaw);
-                    $creditBalanceCredits = $creditBalanceRaw / 1000;
-                    $creditBalanceAud = number_format($creditBalanceCredits / 100, 2);
-                @endphp
-                <li class="nav-item dropdown">
-                    <a class="px-2 nav-link" href="#" id="userCreditsDropdown" role="button" data-toggle="dropdown"
-                       aria-haspopup="true" aria-expanded="false">
+            @php
+                $creditBalanceRaw = Auth::user()->credits ?? 0;
+                $creditBalanceFormatted = Currency::formatForDisplay($creditBalanceRaw);
+                $creditBalanceCredits = $creditBalanceRaw / 1000;
+                $creditBalanceAud = number_format($creditBalanceCredits / 100, 2);
+            @endphp
+            <li class="nav-item dropdown">
+                <a class="px-2 nav-link" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
                         <span class="mr-1 text-gray-600 d-lg-inline">
-                            <small><i class="mr-2 fas fa-coins"></i></small>{{ $creditBalanceFormatted }} {{ $creditsDisplayName }}
+                            <small><i class="mr-2 fas fa-coins"></i></small>{{ $creditBalanceFormatted }}
                             <small class="text-muted d-block" style="font-size: 0.75rem;">≈ ${{ $creditBalanceAud }} AUD</small>
                         </span>
+                </a>
+                <div class="shadow dropdown-menu dropdown-menu-right animated--grow-in"
+                     aria-labelledby="userDropdown">
+                    <a class="dropdown-item" href="{{ route('store.index') }}">
+                        <i class="mr-2 text-gray-400 fas fa-coins fa-sm fa-fw"></i>
+                        {{ __('Store') }}
                     </a>
-                    <div class="shadow dropdown-menu dropdown-menu-right animated--grow-in"
-                         aria-labelledby="userCreditsDropdown">
-                        <a class="dropdown-item" href="{{ route('store.index') }}">
-                            <i class="mr-2 text-gray-400 fas fa-coins fa-sm fa-fw"></i>
-                            {{ __('Store') }}
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" data-toggle="modal" data-target="#redeemVoucherModal"
-                           href="javascript:void(0)">
-                            <i class="mr-2 text-gray-400 fas fa-money-check-alt fa-sm fa-fw"></i>
-                            {{ __('Redeem code') }}
-                        </a>
-                    </div>
-                </li>
-            @endauth
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" data-toggle="modal" data-target="#redeemVoucherModal"
+                       href="javascript:void(0)">
+                        <i class="mr-2 text-gray-400 fas fa-money-check-alt fa-sm fa-fw"></i>
+                        {{ __('Redeem code') }}
+                    </a>
+                </div>
+            </li>
 
             <li class="nav-item dropdown no-arrow">
                 <a class="px-2 nav-link dropdown-toggle no-arrow" href="#" id="userDropdown" role="button"
