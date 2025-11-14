@@ -46,8 +46,9 @@
                                                 class="fas fa-info-circle"></i></label>
                                     </div>
                                     <div class="mr-3 custom-control custom-switch">
-                                        <input type="checkbox" name="is_public"
-                                               class="custom-control-input" id="is_public_create">
+                                        <input type="checkbox" name="is_public" value="1"
+                                               class="custom-control-input" id="is_public_create"
+                                               @checked(old('is_public'))>
                                         <label class="custom-control-label" for="is_public_create">{{ __('Show on Marketing Site') }} <i
                                                 data-toggle="popover" data-trigger="hover"
                                                 data-content="{{ __('Enables this product for the public API and homepage configurator') }}"
