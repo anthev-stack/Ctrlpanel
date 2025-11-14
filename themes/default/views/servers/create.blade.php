@@ -196,7 +196,7 @@
 
                               <!-- Resource Configuration Panel -->
                               <template x-if="selectedProductObject && selectedProductObject.id">
-                                <div class="mt-4 pt-4 border-top">
+                                <div class="mt-4 pt-4 border-top" id="configuration-panel">
                                     <h5 class="mb-3">{{ __('Resource Configuration') }}</h5>
                                     
                                     <template x-if="hasMemoryIncrements()">
@@ -371,19 +371,17 @@
                                         <button type="button"
                                             :disabled="(product.minimum_credits > user.credits && product.price > user.credits) ||
                                                 product.doesNotFit == true ||
-                                                product.servers_count >= product.serverlimit && product.serverlimit != 0 ||
-                                                submitClicked"
+                                                product.servers_count >= product.serverlimit && product.serverlimit != 0"
                                             :class="(product.minimum_credits > user.credits && product.price > user.credits) ||
-                                                product.doesNotFit == true ||
-                                                submitClicked ? 'disabled' : ''"
-                                            class="mt-2 btn btn-primary btn-block" @click="selectProductAndSubmit(product.id)"
+                                                product.doesNotFit == true ? 'disabled' : ''"
+                                            class="mt-2 btn btn-primary btn-block" @click="selectProduct(product.id)"
                                                 x-text="product.doesNotFit == true
                                                     ? '{{ __('Server cant fit on this Location') }}'
                                                     : (product.servers_count >= product.serverlimit && product.serverlimit != 0
                                                         ? '{{ __('Max. Servers with configuration reached') }}'
                                                         : (product.minimum_credits > user.credits && product.price > user.credits
                                                             ? '{{ __('Not enough') }} {{ $credits_display_name }}!'
-                                                            : '{{ __('Create server') }}'))">
+                                                            : (selectedProduct === product.id ? '{{ __('Selected') }}' : '{{ __('Configure') }}')))">
                                         </button>
                                         @if (env('APP_ENV') == 'local' || $store_enabled)
                                         <template x-if="product.price > user.credits || product.minimum_credits > user.credits">
@@ -482,38 +480,14 @@
                     this.updateSelectedObjects()
                 },
 
-                selectProduct(productId) {
+                selectProduct(productId, autoSelect = false) {
                     if (!productId) return;
                     this.selectedProduct = productId;
                     this.updateSelectedObjects();
                     this.resetIncrements();
-                },
-                selectProductAndSubmit(productId) {
-                    if (!productId) return;
-                    this.selectedProduct = productId;
-                    this.updateSelectedObjects();
-                    this.resetIncrements();
-                    
-                    // Wait for product object to update, then submit
-                    this.$nextTick(() => {
-                        if (!this.isFormValid()) return;
-
-                        const emptyVars = this.hasEmptyRequiredVariables(this.selectedEggObject.environment);
-                        if (emptyVars.length > 0) {
-                            this.dispatchModal(emptyVars);
-                            return;
-                        }
-
-                        if (!this.hasEnoughCredits()) {
-                            alert('{{ __('You do not have enough credits for this configuration.') }}');
-                            return;
-                        }
-
-                        document.getElementById('product').value = productId;
-                        document.querySelector('input[name="memory_increment_steps"]').value = this.memoryStepCount;
-                        document.querySelector('input[name="slot_increment_steps"]').value = this.slotStepCount;
-                        document.getElementById('serverForm').submit();
-                    });
+                    if (!autoSelect) {
+                        this.scrollToConfigurator();
+                    }
                 },
                 submitServer() {
                     if (!this.selectedProduct) return;
@@ -604,7 +578,18 @@
 
                     this.locationDescription = this.locations.find(location => location.id == this.selectedLocation).description ?? null;
                     this.loading = false;
-                    this.updateSelectedObjects()
+
+                    if (this.products.length > 0) {
+                        const stillExists = this.products.find(product => product.id == this.selectedProduct);
+                        if (!stillExists) {
+                            this.selectProduct(this.products[0].id, true);
+                        } else {
+                            this.updateSelectedObjects();
+                        }
+                    } else {
+                        this.selectedProduct = null;
+                        this.updateSelectedObjects();
+                    }
                 },
 
 
@@ -785,6 +770,15 @@
 
                 hasEnoughCredits() {
                     return this.user.credits >= this.calculatedPrice;
+                },
+
+                scrollToConfigurator() {
+                    this.$nextTick(() => {
+                        const panel = document.getElementById('configuration-panel');
+                        if (panel) {
+                            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    });
                 },
 
                 dispatchModal(variables) {
