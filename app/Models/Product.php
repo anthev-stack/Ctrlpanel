@@ -83,6 +83,20 @@ class Product extends Model
         );
     }
 
+    protected function slotIncrementPrice(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => Currency::prepareForDatabase($value ?? 0)
+        );
+    }
+
+    protected function memoryIncrementPrice(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => Currency::prepareForDatabase($value ?? 0)
+        );
+    }
+
     public function getHourlyPrice()
     {
         // calculate the hourly price with the billing period

@@ -2,6 +2,7 @@
 
 namespace App\Classes;
 
+use App\Models\Product;
 use App\Models\Pterodactyl\Egg;
 use App\Models\Pterodactyl\Nest;
 use App\Models\Pterodactyl\Node;
@@ -267,9 +268,23 @@ class PterodactylClient
      * @param  int  $allocationId
      * @return Response
      */
-    public function createServer(Server $server, Egg $egg, int $allocationId, mixed $eggVariables = null)
+    public function createServer(Server $server, Product $product, Egg $egg, int $allocationId, mixed $eggVariables = null, array $limitsOverride = [], array $featureLimitsOverride = [])
     {
        try {
+            $limits = array_merge([
+                'memory' => $product->memory,
+                'swap' => $product->swap,
+                'disk' => $product->disk,
+                'io' => $product->io,
+                'cpu' => $product->cpu,
+            ], $limitsOverride);
+
+            $featureLimits = array_merge([
+                'databases' => $product->databases,
+                'backups' => $product->backups,
+                'allocations' => $product->allocations,
+            ], $featureLimitsOverride);
+
             $response = $this->application->post('application/servers', [
                 'name' => $server->name,
                 'external_id' => $server->id,
@@ -278,19 +293,9 @@ class PterodactylClient
                 'docker_image' => $egg->docker_image,
                 'startup' => $egg->startup,
                 'environment' => $this->getEnvironmentVariables($egg, $eggVariables),
-                'oom_disabled' => !$server->product->oom_killer,
-                'limits' => [
-                    'memory' => $server->product->memory,
-                    'swap' => $server->product->swap,
-                    'disk' => $server->product->disk,
-                    'io' => $server->product->io,
-                    'cpu' => $server->product->cpu,
-                ],
-                'feature_limits' => [
-                    'databases' => $server->product->databases,
-                    'backups' => $server->product->backups,
-                    'allocations' => $server->product->allocations,
-                ],
+                'oom_disabled' => !$product->oom_killer,
+                'limits' => $limits,
+                'feature_limits' => $featureLimits,
                 'allocation' => [
                     'default' => $allocationId,
                 ],

@@ -59,6 +59,11 @@ class Server extends Model
         "identifier",
         "billing_priority",
         "product_id",
+        "memory_override",
+        "slot_override",
+        "memory_increment_steps",
+        "slot_increment_steps",
+        "price_override",
         "pterodactyl_id",
         "last_billed",
         "canceled"

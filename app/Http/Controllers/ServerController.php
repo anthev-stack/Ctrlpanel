@@ -121,6 +121,8 @@ class ServerController extends Controller
             'product' => 'required|exists:products,id',
             'egg_variables' => 'nullable|string',
             'billing_priority' => ['nullable', new Enum(BillingPriority::class)],
+            'memory_increment_steps' => 'nullable|integer|min:0',
+            'slot_increment_steps' => 'nullable|integer|min:0',
         ]);
 
         $server = $this->createServer($request);
@@ -166,7 +168,10 @@ class ServerController extends Controller
     private function validateProductRequirements(Product $product, Request $request): string|bool
     {
         $location = $request->input('location');
-        $availableNode = $this->findAvailableNode($location, $product);
+        [$memorySteps, $slotSteps] = $this->resolveIncrementSteps($product, $request);
+
+        $requiredMemory = $product->memory + ($memorySteps * $product->memory_increment_mb);
+        $availableNode = $this->findAvailableNode($location, $product, $requiredMemory);
 
         if (!$availableNode) {
             return __("The chosen location doesn't have the required memory or disk left to allocate this product.");
@@ -183,6 +188,20 @@ class ServerController extends Controller
         if ($user->credits < $minCredits) {
             return 'You do not have the required amount of ' . $this->generalSettings->credits_display_name . ' to use this product!';
         }
+
+        $totalPrice = $product->price + ($memorySteps * $product->memory_increment_price) + ($slotSteps * $product->slot_increment_price);
+        if ($user->credits < $totalPrice) {
+            return __('Insufficient credits for the selected configuration.');
+        }
+
+        $totalSlots = $product->player_slots + ($slotSteps * $product->slot_increment_step);
+
+        $request->merge([
+            'resolved_memory_steps' => $memorySteps,
+            'resolved_slot_steps' => $slotSteps,
+            'resolved_required_memory' => $requiredMemory,
+            'resolved_total_slots' => $totalSlots,
+        ]);
 
         return true;
     }
@@ -258,16 +277,34 @@ class ServerController extends Controller
     {
         $product = Product::findOrFail($request->input('product'));
         $egg = $product->eggs()->findOrFail($request->input('egg'));
-        $node = $this->findAvailableNode($request->input('location'), $product);
+        $requiredMemory = (int)$request->input('resolved_required_memory', $product->memory);
+        $memorySteps = (int)$request->input('resolved_memory_steps', 0);
+        $slotSteps = (int)$request->input('resolved_slot_steps', 0);
+        $totalSlots = (int)$request->input('resolved_total_slots', $product->player_slots ?? 0);
+
+        $node = $this->findAvailableNode($request->input('location'), $product, $requiredMemory);
 
         if (!$node) return null;
 
-        $server = $request->user()->servers()->create([
+        $extraPrice = ($memorySteps * $product->memory_increment_price) + ($slotSteps * $product->slot_increment_price);
+        $totalPrice = $product->price + $extraPrice;
+
+        $serverData = [
             'name' => $request->input('name'),
             'product_id' => $product->id,
+            'memory_override' => $requiredMemory,
+            'slot_override' => $totalSlots > 0 ? $totalSlots : null,
+            'memory_increment_steps' => $memorySteps,
+            'slot_increment_steps' => $slotSteps,
             'last_billed' => Carbon::now(),
             'billing_priority' => $request->input('billing_priority', $product->default_billing_priority),
-        ]);
+        ];
+
+        if ($extraPrice > 0) {
+            $serverData['price_override'] = $totalPrice;
+        }
+
+        $server = $request->user()->servers()->create($serverData);
 
         $allocationId = $this->pterodactyl->getFreeAllocationId($node);
         if (!$allocationId) {
@@ -279,7 +316,29 @@ class ServerController extends Controller
             return null;
         }
 
-        $response = $this->pterodactyl->createServer($server, $egg, $allocationId, $request->input('egg_variables'));
+        $limits = [
+            'memory' => $requiredMemory,
+            'swap' => $product->swap,
+            'disk' => $product->disk,
+            'io' => $product->io,
+            'cpu' => $product->cpu,
+        ];
+
+        $featureLimits = [
+            'databases' => $product->databases,
+            'backups' => $product->backups,
+            'allocations' => $product->allocations,
+        ];
+
+        $response = $this->pterodactyl->createServer(
+            $server,
+            $product,
+            $egg,
+            $allocationId,
+            $request->input('egg_variables'),
+            $limits,
+            $featureLimits
+        );
         if ($response->failed()) {
             Log::error('Failed to create server on Pterodactyl', [
                 'server_id' => $server->id,
@@ -301,9 +360,12 @@ class ServerController extends Controller
 
     private function handlePostCreation(User $user, Server $server): void
     {
-        logger('Product Price: ' . $server->product->price);
+        $price = $server->price_override ?? $server->product->price;
+        logger('Server charge amount: ' . $price);
 
-        $user->decrement('credits', $server->product->price);
+        if ($price > 0) {
+            $user->decrement('credits', $price);
+        }
 
         try {
             if ($this->discordSettings->role_for_active_clients &&
@@ -553,6 +615,11 @@ class ServerController extends Controller
             'product_id' => $newProduct->id,
             'updated_at' => now(),
             'last_billed' => now(),
+            'memory_override' => null,
+            'slot_override' => null,
+            'memory_increment_steps' => 0,
+            'slot_increment_steps' => 0,
+            'price_override' => null,
             'canceled' => null,
         ]);
 
@@ -569,14 +636,36 @@ class ServerController extends Controller
         return $oldProduct->price - ($oldProduct->price * ($timeUsed / $billingPeriodSeconds));
     }
 
-    private function findAvailableNode(string $locationId, Product $product): ?Node
+    private function resolveIncrementSteps(Product $product, Request $request): array
     {
+        $memorySteps = max(0, (int)$request->input('memory_increment_steps', 0));
+        $slotSteps = max(0, (int)$request->input('slot_increment_steps', 0));
+
+        if ($product->memory_increment_max_steps <= 0 || $product->memory_increment_mb <= 0) {
+            $memorySteps = 0;
+        } else {
+            $memorySteps = min($memorySteps, $product->memory_increment_max_steps);
+        }
+
+        if ($product->slot_increment_max_steps <= 0 || $product->slot_increment_step <= 0) {
+            $slotSteps = 0;
+        } else {
+            $slotSteps = min($slotSteps, $product->slot_increment_max_steps);
+        }
+
+        return [$memorySteps, $slotSteps];
+    }
+
+    private function findAvailableNode(string $locationId, Product $product, ?int $requiredMemory = null): ?Node
+    {
+        $memoryRequirement = $requiredMemory ?? $product->memory;
+
         $nodes = Node::where('location_id', $locationId)
             ->whereHas('products', fn($q) => $q->where('product_id', $product->id))
             ->get();
 
-        $availableNodes = $nodes->reject(function ($node) use ($product) {
-            return !$this->pterodactyl->checkNodeResources($node, $product->memory, $product->disk);
+        $availableNodes = $nodes->reject(function ($node) use ($product, $memoryRequirement) {
+            return !$this->pterodactyl->checkNodeResources($node, $memoryRequirement, $product->disk);
         });
 
         return $availableNodes->isEmpty() ? null : $availableNodes->first();

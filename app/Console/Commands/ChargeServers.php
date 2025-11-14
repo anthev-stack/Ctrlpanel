@@ -96,8 +96,9 @@ class ChargeServers extends Command
                     }
 
 
+                    $price = $server->price_override ?? $product->price;
                     $isCanceled = $server->canceled;
-                    $hasInsufficientCredits = $user->credits < $product->price && $product->price != 0;
+                    $hasInsufficientCredits = $user->credits < $price && $price != 0;
 
                     // check if the server is canceled or if user has enough credits to charge the server
                     if ($isCanceled || $hasInsufficientCredits) {
@@ -108,10 +109,10 @@ class ChargeServers extends Command
                         }
                     } else {
                         // charge credits to user
-                        $this->line("<fg=blue>{$user->name}</> Current credits: <fg=green>{$user->credits}</> Credits to be removed: <fg=red>{$product->price}</>");
+                        $this->line("<fg=blue>{$user->name}</> Current credits: <fg=green>{$user->credits}</> Credits to be removed: <fg=red>{$price}</>");
 
-                        if ($user->credits >= $product->price) {
-                            $user->decrement('credits', $product->price);
+                        if ($user->credits >= $price) {
+                            $user->decrement('credits', $price);
                             $user->refresh();
                             // update server last_billed date in db
                             DB::table('servers')->where('id', $server->id)->update(['last_billed' => $newBillingDate]);

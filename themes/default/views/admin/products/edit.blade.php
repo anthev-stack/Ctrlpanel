@@ -321,6 +321,96 @@
 										</div>
 									</div>
 								</div>
+
+                                <hr>
+                                <h5>{{ __('Dynamic Resource Increments') }}</h5>
+                                <p class="text-muted">{{ __('Adjust how this product scales when additional resources are selected.') }}</p>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="player_slots">{{ __('Base Player Slots') }}</label>
+                                            <input value="{{ old('player_slots', optional($product)->player_slots) }}"
+                                                id="player_slots" name="player_slots" type="number" min="0"
+                                                class="form-control @error('player_slots') is-invalid @enderror">
+                                            @error('player_slots')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="slot_increment_step">{{ __('Slot Increment Step') }}</label>
+                                            <input value="{{ old('slot_increment_step', optional($product)->slot_increment_step) }}"
+                                                id="slot_increment_step" name="slot_increment_step" type="number" min="0"
+                                                class="form-control @error('slot_increment_step') is-invalid @enderror">
+                                            @error('slot_increment_step')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="slot_increment_price">{{ __('Price per Slot Increment') }} ({{ $credits_display_name }})</label>
+                                            <input value="{{ old('slot_increment_price', Currency::formatForForm($product->slot_increment_price)) }}"
+                                                id="slot_increment_price" name="slot_increment_price" type="number" step=".0001" min="0"
+                                                class="form-control @error('slot_increment_price') is-invalid @enderror">
+                                            @error('slot_increment_price')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="slot_increment_max_steps">{{ __('Maximum Slot Increments') }}</label>
+                                            <input value="{{ old('slot_increment_max_steps', optional($product)->slot_increment_max_steps) }}"
+                                                id="slot_increment_max_steps" name="slot_increment_max_steps" type="number" min="0"
+                                                class="form-control @error('slot_increment_max_steps') is-invalid @enderror">
+                                            @error('slot_increment_max_steps')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="memory_increment_mb">{{ __('Memory Increment Size (MB)') }}</label>
+                                            <input value="{{ old('memory_increment_mb', optional($product)->memory_increment_mb) }}"
+                                                id="memory_increment_mb" name="memory_increment_mb" type="number" min="0"
+                                                class="form-control @error('memory_increment_mb') is-invalid @enderror">
+                                            @error('memory_increment_mb')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="memory_increment_price">{{ __('Price per Memory Increment') }} ({{ $credits_display_name }})</label>
+                                            <input value="{{ old('memory_increment_price', Currency::formatForForm($product->memory_increment_price)) }}"
+                                                id="memory_increment_price" name="memory_increment_price" type="number" step=".0001" min="0"
+                                                class="form-control @error('memory_increment_price') is-invalid @enderror">
+                                            @error('memory_increment_price')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="memory_increment_max_steps">{{ __('Maximum Memory Increments') }}</label>
+                                            <input value="{{ old('memory_increment_max_steps', optional($product)->memory_increment_max_steps) }}"
+                                                id="memory_increment_max_steps" name="memory_increment_max_steps" type="number" min="0"
+                                                class="form-control @error('memory_increment_max_steps') is-invalid @enderror">
+                                            @error('memory_increment_max_steps')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="row">
 									<div class="col-lg-6">
 										<div class="form-group">
