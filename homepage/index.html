@@ -112,7 +112,7 @@
     <section id="configure" class="section">
         <h2>Configure & Launch</h2>
         <p class="section-lead">Dial in RAM, slots, and regions—then head to billing to finish checkout.</p>
-        <div class="configurator inline" x-data="configureApp()">
+        <div class="configurator-inline" x-data="configureApp()">
             <div class="config-card">
                 <h3>Game</h3>
                 <div class="option-list">
@@ -141,7 +141,7 @@
                 </div>
             </div>
 
-            <div class="config-card">
+            <div class="config-card stretch">
                 <h3>Resources</h3>
 
                 <div class="range-group" x-show="currentPlan">
@@ -149,7 +149,7 @@
                         <span>RAM</span>
                         <span x-text="ramLabel()"></span>
                     </div>
-                    <input type="range" min="0" :max="currentPlan.maxRamSteps" step="1" class="custom-range"
+                    <input type="range" min="0" :max="currentPlan.maxRamSteps" step="1" class="config-range"
                         x-model.number="ramSteps" @input="updatePrice">
                     <small class="text-muted" x-text="ramDescription()"></small>
                 </div>
@@ -159,7 +159,7 @@
                         <span>Player Slots</span>
                         <span x-text="slotLabel()"></span>
                     </div>
-                    <input type="range" min="0" :max="currentPlan.maxSlotSteps" step="1" class="custom-range"
+                    <input type="range" min="0" :max="currentPlan.maxSlotSteps" step="1" class="config-range"
                         x-model.number="slotSteps" @input="updatePrice">
                     <small class="text-muted" x-text="slotDescription()"></small>
                 </div>
@@ -248,8 +248,11 @@
     </footer>
 
     <script>
-        function configureApp() {
-            return {
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('configureApp', () => ({
+                init() {
+                    window.configureAppInstance = this;
+                },
                 plans: {
                     cs2: {
                         id: 'cs2',
@@ -304,6 +307,12 @@
                     return this.plans[this.selectedPlan];
                 },
 
+                setPlan(planId) {
+                    if (!this.plans[planId]) return;
+                    this.selectedPlan = planId;
+                    this.updatePrice();
+                },
+
                 updatePrice() {
                     if (!this.currentPlan) return;
                     const base = this.currentPlan.basePrice;
@@ -356,25 +365,18 @@
                         maximumFractionDigits: 0
                     });
                 }
-            }
-        }
+            }));
+        });
 
         function scrollToConfigurator(planId) {
             const section = document.getElementById('configure');
             if (section) {
                 section.scrollIntoView({ behavior: 'smooth' });
-                requestAnimationFrame(() => {
-                    if (window.configureAppInstance) {
-                        window.configureAppInstance.selectedPlan = planId;
-                    }
-                });
+                if (window.configureAppInstance) {
+                    window.configureAppInstance.setPlan(planId);
+                }
             }
         }
-
-        document.addEventListener('alpine:init', () => {
-            window.configureAppInstance = configureApp();
-            Alpine.data('configureApp', () => window.configureAppInstance);
-        });
 
         document.getElementById('year').textContent = new Date().getFullYear();
     </script>

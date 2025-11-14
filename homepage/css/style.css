@@ -1,4 +1,64 @@
-﻿:root {
+﻿.configurator-inline {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.config-card.stretch {
+    grid-column: span 2;
+}
+
+.config-range {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 14px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.35), rgba(99, 102, 241, 0.15));
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.config-range::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.12),
+        rgba(255, 255, 255, 0.12) 2px,
+        transparent 2px,
+        transparent 14px
+    );
+    pointer-events: none;
+}
+
+.config-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--primary);
+    border: 2px solid #fff;
+    box-shadow: 0 8px 18px rgba(99, 102, 241, 0.4);
+    cursor: pointer;
+}
+
+.config-range::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--primary);
+    border: 2px solid #fff;
+    box-shadow: 0 8px 18px rgba(99, 102, 241, 0.4);
+    cursor: pointer;
+}
+
+.config-range::-moz-range-track {
+    background: transparent;
+}
+:root {
     --bg: #060818;
     --card: #0e1126;
     --primary: #6366f1;
