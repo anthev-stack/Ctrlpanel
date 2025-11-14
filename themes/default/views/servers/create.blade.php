@@ -255,16 +255,6 @@
                                             <span x-text="selectedProductObject.display_price + ' {{ $credits_display_name }}'"></span>
                                         </small>
                                     </div>
-
-                                    <div class="alert alert-warning" x-show="!hasEnoughCredits()">
-                                        {{ __('You need more credits for this configuration.') }}
-                                    </div>
-
-                                    <button type="button" class="btn btn-primary btn-block"
-                                            :disabled="submitClicked || !isFormValid() || !hasEnoughCredits()"
-                                            @click="submitServer">
-                                        {{ __('Create server') }}
-                                    </button>
                                 </div>
                               </template>
                         </div>
@@ -285,7 +275,9 @@
                                   }">
                     <div class="mt-4">
                         <template x-for="product in products" :key="product.id">
-                            <div class="mb-3 card">
+                            <div class="mb-3 card"
+                                 :class="{'border-primary shadow': selectedProduct === product.id}"
+                                 @click="selectProduct(product.id)">
                                 <div class="card-body d-flex flex-column">
                                   <div class="d-flex justify-content-between align-items-center">
                                     <!-- Product Name -->
@@ -371,21 +363,28 @@
                                         <button type="button"
                                             :disabled="(product.minimum_credits > user.credits && product.price > user.credits) ||
                                                 product.doesNotFit == true ||
-                                                product.servers_count >= product.serverlimit && product.serverlimit != 0"
+                                                product.servers_count >= product.serverlimit && product.serverlimit != 0 ||
+                                                submitClicked ||
+                                                (selectedProduct === product.id && !hasEnoughCredits())"
                                             :class="(product.minimum_credits > user.credits && product.price > user.credits) ||
                                                 product.doesNotFit == true ? 'disabled' : ''"
-                                            class="mt-2 btn btn-primary btn-block" @click="selectProduct(product.id)"
+                                            class="mt-2 btn btn-primary btn-block"
+                                            @click.stop="selectProductAndSubmit(product.id)"
                                                 x-text="product.doesNotFit == true
                                                     ? '{{ __('Server cant fit on this Location') }}'
                                                     : (product.servers_count >= product.serverlimit && product.serverlimit != 0
                                                         ? '{{ __('Max. Servers with configuration reached') }}'
                                                         : (product.minimum_credits > user.credits && product.price > user.credits
                                                             ? '{{ __('Not enough') }} {{ $credits_display_name }}!'
-                                                            : (selectedProduct === product.id ? '{{ __('Selected') }}' : '{{ __('Configure') }}')))">
+                                                            : '{{ __('Create server') }}'))">
                                         </button>
+                                        <div class="mt-2 alert alert-warning"
+                                             x-show="selectedProduct === product.id && !hasEnoughCredits()">
+                                            {{ __('You need more credits for this configuration.') }}
+                                        </div>
                                         @if (env('APP_ENV') == 'local' || $store_enabled)
                                         <template x-if="product.price > user.credits || product.minimum_credits > user.credits">
-                                            <a href="{{ route('store.index') }}">
+                                            <a href="{{ route('store.index') }}" @click.stop>
                                                 <button type="button" class="mt-2 btn btn-warning btn-block">
                                                     {{ __('Buy more') }} {{ $credits_display_name }}
                                                 </button>
@@ -482,33 +481,49 @@
 
                 selectProduct(productId, autoSelect = false) {
                     if (!productId) return;
+                    const product = this.products.find(product => product.id == productId);
+                    if (!product ||
+                        product.doesNotFit ||
+                        (product.serverlimit != 0 && product.servers_count >= product.serverlimit)) {
+                        return;
+                    }
+
+                    const changed = this.selectedProduct !== productId;
                     this.selectedProduct = productId;
                     this.updateSelectedObjects();
-                    this.resetIncrements();
+                    if (changed) {
+                        this.resetIncrements();
+                    }
+
                     if (!autoSelect) {
                         this.scrollToConfigurator();
                     }
                 },
-                submitServer() {
-                    if (!this.selectedProduct) return;
-                    this.updateSelectedObjects();
-                    if (!this.isFormValid()) return;
-
-                    const emptyVars = this.hasEmptyRequiredVariables(this.selectedEggObject.environment);
-                    if (emptyVars.length > 0) {
-                        this.dispatchModal(emptyVars);
-                        return;
+                selectProductAndSubmit(productId) {
+                    if (!productId) return;
+                    if (this.selectedProduct !== productId) {
+                        this.selectProduct(productId, true);
                     }
 
-                    if (!this.hasEnoughCredits()) {
-                        alert('{{ __('You do not have enough credits for this configuration.') }}');
-                        return;
-                    }
+                    this.$nextTick(() => {
+                        if (!this.isFormValid()) return;
 
-                    document.getElementById('product').value = this.selectedProduct;
-                    document.querySelector('input[name="memory_increment_steps"]').value = this.memoryStepCount;
-                    document.querySelector('input[name="slot_increment_steps"]').value = this.slotStepCount;
-                    document.getElementById('serverForm').submit();
+                        const emptyVars = this.hasEmptyRequiredVariables(this.selectedEggObject.environment);
+                        if (emptyVars.length > 0) {
+                            this.dispatchModal(emptyVars);
+                            return;
+                        }
+
+                        if (!this.hasEnoughCredits()) {
+                            alert('{{ __('You do not have enough credits for this configuration.') }}');
+                            return;
+                        }
+
+                        document.getElementById('product').value = productId;
+                        document.querySelector('input[name="memory_increment_steps"]').value = this.memoryStepCount;
+                        document.querySelector('input[name="slot_increment_steps"]').value = this.slotStepCount;
+                        document.getElementById('serverForm').submit();
+                    });
                 },
 
                 /**
