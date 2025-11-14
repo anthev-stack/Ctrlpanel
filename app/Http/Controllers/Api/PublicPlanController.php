@@ -13,7 +13,7 @@ class PublicPlanController extends Controller
     {
         $plans = Cache::remember('public_plans', now()->addMinutes(5), function () {
             return Product::query()
-                ->with(['nodes:id,name,description'])
+                ->with(['nodes:id,location_id', 'nodes.location:id,name,description'])
                 ->where('disabled', false)
                 ->where('is_public', true)
                 ->orderBy('name')
@@ -22,6 +22,18 @@ class PublicPlanController extends Controller
                     $priceCredits = $this->convertToCredits($product->price);
                     $memoryIncrementCredits = $this->convertToCredits($product->memory_increment_price);
                     $slotIncrementCredits = $this->convertToCredits($product->slot_increment_price);
+
+                    $locations = $product->nodes
+                        ->filter(fn ($node) => $node->location)
+                        ->map(function ($node) {
+                            return [
+                                'id' => (string) $node->location->id,
+                                'name' => $node->location->name ?? 'Location ' . $node->location->id,
+                                'description' => $node->location->description,
+                            ];
+                        })
+                        ->unique('id')
+                        ->values();
 
                     return [
                         'id' => $product->id,
@@ -43,13 +55,7 @@ class PublicPlanController extends Controller
                         'slot_increment_price_aud' => $this->convertCreditsToAud($slotIncrementCredits),
                         'slot_increment_max_steps' => (int)$product->slot_increment_max_steps,
                         'base_ram_gb' => round(($product->memory ?? 0) / 1024, 2),
-                        'locations' => $product->nodes->map(function ($node) {
-                            return [
-                                'id' => (string)$node->id,
-                                'name' => $node->name,
-                                'description' => $node->description,
-                            ];
-                        })->values(),
+                        'locations' => $locations,
                     ];
                 })->values();
         });
