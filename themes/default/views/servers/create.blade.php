@@ -304,14 +304,15 @@
                                             :class="(product.minimum_credits > user.credits && product.price > user.credits) ||
                                                 product.doesNotFit == true ||
                                                 submitClicked ? 'disabled' : ''"
-                                            class="mt-2 btn btn-primary btn-block" @click="setProduct(product.id);"
+                                            class="mt-2 btn btn-primary btn-block" @click="selectProduct(product.id)"
                                                 x-text="product.doesNotFit == true
                                                     ? '{{ __('Server cant fit on this Location') }}'
                                                     : (product.servers_count >= product.serverlimit && product.serverlimit != 0
                                                         ? '{{ __('Max. Servers with configuration reached') }}'
                                                         : (product.minimum_credits > user.credits && product.price > user.credits
                                                             ? '{{ __('Not enough') }} {{ $credits_display_name }}!'
-                                                            : '{{ __('Create server') }}'))">                                        </button>
+                                                            : (selectedProduct === product.id ? '{{ __('Selected') }}' : '{{ __('Configure') }}')))">
+                                        </button>
                                         @if (env('APP_ENV') == 'local' || $store_enabled)
                                         <template x-if="product.price > user.credits || product.minimum_credits > user.credits">
                                             <a href="{{ route('store.index') }}">
@@ -329,9 +330,91 @@
                     </div>
                 </div>
 
+                <template x-if="selectedProductObject && selectedProductObject.id">
+                    <div class="mt-4 row justify-content-center">
+                        <div class="card col-xl-4 col-lg-5 col-md-6 col-sm-10" id="configuration-panel">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h4 class="mb-0" x-text="selectedProductObject.name"></h4>
+                                    <span class="badge badge-secondary" x-text="formatCredits(selectedProductObject.price) + ' {{ $credits_display_name }}'"></span>
+                                </div>
+
+                                <div class="mb-3 text-muted" x-text="selectedProductObject.description"></div>
+
+                                <template x-if="hasMemoryIncrements()">
+                                    <div class="mb-4">
+                                        <label class="d-flex justify-content-between align-items-center">
+                                            <span>{{ __('Memory') }}</span>
+                                            <span class="badge badge-light" x-text="formatMemory(calculatedMemoryMb())"></span>
+                                        </label>
+                                        <input type="range" min="0"
+                                               :max="selectedProductObject.memory_increment_max_steps"
+                                               step="1"
+                                               class="custom-range"
+                                               x-model.number="memoryStepCount"
+                                               @input="updateCalculatedPrice">
+                                        <small class="form-text text-muted" x-text="memoryIncrementDescription()"></small>
+                                    </div>
+                                </template>
+                                <template x-if="!hasMemoryIncrements()">
+                                    <p class="text-muted">
+                                        {{ __('Memory is fixed at') }}
+                                        <strong x-text="formatMemory(parseInt(selectedProductObject.memory ?? 0))"></strong>
+                                    </p>
+                                </template>
+
+                                <template x-if="hasSlotIncrements()">
+                                    <div class="mb-4">
+                                        <label class="d-flex justify-content-between align-items-center">
+                                            <span>{{ __('Player Slots') }}</span>
+                                            <span class="badge badge-light" x-text="calculatedSlots()"></span>
+                                        </label>
+                                        <input type="range" min="0"
+                                               :max="selectedProductObject.slot_increment_max_steps"
+                                               step="1"
+                                               class="custom-range"
+                                               x-model.number="slotStepCount"
+                                               @input="updateCalculatedPrice">
+                                        <small class="form-text text-muted" x-text="slotIncrementDescription()"></small>
+                                    </div>
+                                </template>
+                                <template x-if="!hasSlotIncrements()">
+                                    <p class="text-muted">
+                                        {{ __('Player slots are fixed at') }}
+                                        <strong x-text="selectedProductObject.player_slots ?? 0"></strong>
+                                    </p>
+                                </template>
+
+                                <div class="p-3 mb-3 border rounded bg-light">
+                                    <div class="d-flex justify-content-between">
+                                        <span>{{ __('Total Price') }}</span>
+                                        <strong x-text="formatCredits(calculatedPrice) + ' {{ $credits_display_name }}'"></strong>
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ __('Base price') }}:
+                                        <span x-text="selectedProductObject.display_price + ' {{ $credits_display_name }}'"></span>
+                                    </small>
+                                </div>
+
+                                <div class="alert alert-warning" x-show="!hasEnoughCredits()">
+                                    {{ __('You need more credits for this configuration.') }}
+                                </div>
+
+                                <button type="button" class="btn btn-primary btn-block"
+                                        :disabled="submitClicked || !isFormValid() || !hasEnoughCredits()"
+                                        @click="submitServer">
+                                    {{ __('Create server') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="product" id="product" x-model="selectedProduct">
                 <input type="hidden" name="egg_variables" id="egg_variables">
+                <input type="hidden" name="memory_increment_steps" :value="memoryStepCount">
+                <input type="hidden" name="slot_increment_steps" :value="slotStepCount">
             </form>
             <!-- END FORM -->
 
@@ -371,6 +454,9 @@
                 products: [],
 
                 submitClicked: false,
+                memoryStepCount: 0,
+                slotStepCount: 0,
+                calculatedPrice: 0,
 
 
                 /**
@@ -387,6 +473,9 @@
                     this.selectedLocation = 'null';
                     this.selectedProduct = null;
                     this.locationDescription = 'null';
+                    this.memoryStepCount = 0;
+                    this.slotStepCount = 0;
+                    this.calculatedPrice = 0;
 
                     this.eggs = this.eggsSave.filter(egg => egg.nest_id == this.selectedNest)
 
@@ -400,20 +489,33 @@
                     this.updateSelectedObjects()
                 },
 
-                setProduct(productId) {
-                    if (!productId) return
-
+                selectProduct(productId) {
+                    if (!productId) return;
                     this.selectedProduct = productId;
                     this.updateSelectedObjects();
+                    this.resetIncrements();
+                    this.scrollToConfigurator();
+                },
+                submitServer() {
+                    if (!this.selectedProduct) return;
+                    this.updateSelectedObjects();
+                    if (!this.isFormValid()) return;
 
-                    let hasEmptyRequiredVariables = this.hasEmptyRequiredVariables(this.selectedEggObject.environment);
-
-                    if(hasEmptyRequiredVariables.length > 0) {
-                      this.dispatchModal(hasEmptyRequiredVariables);
-                    } else {
-                      document.getElementById('product').value = productId;
-                      document.getElementById('serverForm').submit();
+                    const emptyVars = this.hasEmptyRequiredVariables(this.selectedEggObject.environment);
+                    if (emptyVars.length > 0) {
+                        this.dispatchModal(emptyVars);
+                        return;
                     }
+
+                    if (!this.hasEnoughCredits()) {
+                        alert('{{ __('You do not have enough credits for this configuration.') }}');
+                        return;
+                    }
+
+                    document.getElementById('product').value = this.selectedProduct;
+                    document.querySelector('input[name="memory_increment_steps"]').value = this.memoryStepCount;
+                    document.querySelector('input[name="slot_increment_steps"]').value = this.slotStepCount;
+                    document.getElementById('serverForm').submit();
                 },
 
                 /**
@@ -428,8 +530,11 @@
                     this.locations = [];
                     this.products = [];
                     this.selectedLocation = 'null';
-                    this.selectedProduct = 'null';
+                    this.selectedProduct = null;
                     this.locationDescription = null;
+                    this.memoryStepCount = 0;
+                    this.slotStepCount = 0;
+                    this.calculatedPrice = 0;
 
                     let response = await axios.get(`{{ route('products.locations.egg') }}/${this.selectedEgg}`)
                         .catch(console.error)
@@ -459,6 +564,9 @@
                     this.fetchedProducts = false;
                     this.products = [];
                     this.selectedProduct = null;
+                    this.memoryStepCount = 0;
+                    this.slotStepCount = 0;
+                    this.calculatedPrice = 0;
 
                     let response = await axios.get(
                             `{{ route('products.products.location') }}/${this.selectedEgg}/${this.selectedLocation}`)
@@ -497,7 +605,18 @@
                         }
                     })
 
-                    this.selectedProductObject = this.products.find(product => product.id == this.selectedProduct) ?? {}
+                    const previousProductId = this.selectedProductObject?.id ?? null;
+                    this.selectedProductObject = this.products.find(product => product.id == this.selectedProduct) ?? {};
+
+                    if (this.selectedProductObject && this.selectedProductObject.id) {
+                        if (previousProductId !== this.selectedProductObject.id) {
+                            this.memoryStepCount = 0;
+                            this.slotStepCount = 0;
+                        }
+                        this.updateCalculatedPrice();
+                    } else {
+                        this.calculatedPrice = 0;
+                    }
                 },
 
                 /**
@@ -558,6 +677,104 @@
                     }
 
                     return text;
+                },
+
+                resetIncrements() {
+                    this.memoryStepCount = 0;
+                    this.slotStepCount = 0;
+                    this.updateCalculatedPrice();
+                },
+
+                updateCalculatedPrice() {
+                    if (!this.selectedProductObject || !this.selectedProductObject.id) {
+                        this.calculatedPrice = 0;
+                        return;
+                    }
+                    const basePrice = this.parseCredits(this.selectedProductObject.price);
+                    const memoryPrice = this.memoryStepCount * this.parseCredits(this.selectedProductObject.memory_increment_price);
+                    const slotPrice = this.slotStepCount * this.parseCredits(this.selectedProductObject.slot_increment_price);
+                    this.calculatedPrice = basePrice + memoryPrice + slotPrice;
+                },
+
+                parseCredits(value) {
+                    const parsed = parseInt(value ?? 0);
+                    return isNaN(parsed) ? 0 : parsed;
+                },
+
+                formatCredits(value) {
+                    const parsed = this.parseCredits(value);
+                    const amount = parsed / 1000;
+                    return amount.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2
+                    });
+                },
+
+                hasMemoryIncrements() {
+                    return parseInt(this.selectedProductObject.memory_increment_mb ?? 0) > 0 &&
+                        parseInt(this.selectedProductObject.memory_increment_max_steps ?? 0) > 0;
+                },
+
+                hasSlotIncrements() {
+                    return parseInt(this.selectedProductObject.slot_increment_step ?? 0) > 0 &&
+                        parseInt(this.selectedProductObject.slot_increment_max_steps ?? 0) > 0;
+                },
+
+                calculatedMemoryMb() {
+                    const base = parseInt(this.selectedProductObject.memory ?? 0);
+                    const increment = parseInt(this.selectedProductObject.memory_increment_mb ?? 0);
+                    return base + (this.memoryStepCount * increment);
+                },
+
+                formatMemory(mb) {
+                    if (!mb) return '0 MB';
+                    if (mb >= 1024) {
+                        return (mb / 1024).toFixed(2) + ' GB';
+                    }
+                    return mb + ' MB';
+                },
+
+                memoryIncrementDescription() {
+                    if (!this.hasMemoryIncrements()) {
+                        return '';
+                    }
+                    if (this.memoryStepCount === 0) {
+                        return '{{ __('Using base memory only') }}';
+                    }
+                    const extraMb = this.memoryStepCount * parseInt(this.selectedProductObject.memory_increment_mb ?? 0);
+                    const price = this.memoryStepCount * this.parseCredits(this.selectedProductObject.memory_increment_price);
+                    return `+${this.formatMemory(extraMb)} · +${this.formatCredits(price)} {{ $credits_display_name }}`;
+                },
+
+                calculatedSlots() {
+                    const base = parseInt(this.selectedProductObject.player_slots ?? 0);
+                    const step = parseInt(this.selectedProductObject.slot_increment_step ?? 0);
+                    return base + (this.slotStepCount * step);
+                },
+
+                slotIncrementDescription() {
+                    if (!this.hasSlotIncrements()) {
+                        return '';
+                    }
+                    if (this.slotStepCount === 0) {
+                        return '{{ __('Using base slots only') }}';
+                    }
+                    const extra = this.slotStepCount * parseInt(this.selectedProductObject.slot_increment_step ?? 0);
+                    const price = this.slotStepCount * this.parseCredits(this.selectedProductObject.slot_increment_price);
+                    return `+${extra} {{ __('slots') }} · +${this.formatCredits(price)} {{ $credits_display_name }}`;
+                },
+
+                hasEnoughCredits() {
+                    return this.user.credits >= this.calculatedPrice;
+                },
+
+                scrollToConfigurator() {
+                    this.$nextTick(() => {
+                        const panel = document.getElementById('configuration-panel');
+                        if (panel) {
+                            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    });
                 },
 
                 dispatchModal(variables) {
