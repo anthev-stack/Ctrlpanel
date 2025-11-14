@@ -101,21 +101,22 @@
             <div class="configurator-inline">
                 <div class="config-card">
                     <h3>Configuration</h3>
-                    <label class="form-label">Game</label>
+                    <label class="form-label mt-2">Game</label>
                     <div class="select-control mt-1">
                         <select class="custom-select" x-model="selectedPlan" @change="setPlan($event.target.value)">
                             <template x-for="plan in plans" :key="plan.slug">
                                 <option :value="plan.slug"
-                                    x-text="`${plan.name} · ${plan.price_display}`"></option>
+                                        x-text="`${plan.name} · ${formatCredits(plan.price)} credits`"></option>
                             </template>
                         </select>
                         <span class="select-caret">⌄</span>
                     </div>
                     <label class="form-label mt-3">Location</label>
                     <div class="select-control mt-1">
-                        <select class="custom-select" x-model="selectedLocation">
-                            <template x-for="location in locations" :key="location.value">
-                                <option :value="location.value" x-text="location.label"></option>
+                        <select class="custom-select" x-model="selectedLocation" @change="ensureLocation()">
+                            <template x-for="location in locationOptions" :key="location.id">
+                                <option :value="location.id"
+                                        x-text="formatLocationOption(location)"></option>
                             </template>
                         </select>
                         <span class="select-caret">⌄</span>
@@ -245,13 +246,10 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('configureApp', () => ({
                 plans: [],
-                locations: [
-                    { value: 'syd.gamecontrol.cc', label: 'Sydney, Australia (syd.gamecontrol.cc)' },
-                    { value: 'node-01', label: 'US West (node-01)' }
-                ],
+                locations: [],
                 loading: true,
                 selectedPlan: null,
-                selectedLocation: 'syd.gamecontrol.cc',
+                selectedLocation: null,
                 ramSteps: 0,
                 slotSteps: 0,
                 totalPrice: 0,
@@ -268,13 +266,16 @@
                         }
                         const data = await response.json();
                         this.plans = data;
-                        if (data.length && !this.selectedPlan) {
+                        this.locations = this.collectLocations(data);
+                        if (!this.selectedPlan && data.length) {
                             this.selectedPlan = data[0].slug;
                         }
+                        this.ensureLocation();
                         this.updatePrice();
                     } catch (error) {
                         console.error(error);
                         this.plans = [];
+                        this.locations = [];
                     } finally {
                         this.loading = false;
                     }
@@ -284,6 +285,14 @@
                     return this.plans.find(plan => plan.slug === this.selectedPlan) || null;
                 },
 
+                get locationOptions() {
+                    const plan = this.currentPlan;
+                    if (plan && plan.locations && plan.locations.length) {
+                        return plan.locations;
+                    }
+                    return this.locations;
+                },
+
                 setPlan(slug) {
                     if (!this.plans.find(plan => plan.slug === slug)) {
                         return;
@@ -291,6 +300,7 @@
                     this.selectedPlan = slug;
                     this.ramSteps = 0;
                     this.slotSteps = 0;
+                    this.ensureLocation();
                     this.updatePrice();
                 },
 
@@ -361,8 +371,8 @@
                 },
 
                 locationLabel() {
-                    const option = this.locations.find(loc => loc.value === this.selectedLocation);
-                    return option ? option.label : '—';
+                    const location = this.findLocation(this.selectedLocation);
+                    return location ? location.name : '—';
                 },
 
                 planBaseRamLabel(plan) {
@@ -380,7 +390,9 @@
                     url.searchParams.set('plan', plan.slug);
                     url.searchParams.set('ram_steps', this.ramSteps);
                     url.searchParams.set('slot_steps', this.slotSteps);
-                    url.searchParams.set('location', this.selectedLocation);
+                    if (this.selectedLocation) {
+                        url.searchParams.set('location', this.selectedLocation);
+                    }
                     window.location.href = url.toString();
                 },
 
@@ -397,6 +409,58 @@
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
                     });
+                },
+
+                collectLocations(plans) {
+                    const unique = new Map();
+                    plans.forEach(plan => {
+                        (plan.locations || []).forEach(location => {
+                            const key = String(location.id);
+                            if (!unique.has(key)) {
+                                unique.set(key, {
+                                    id: key,
+                                    name: location.name || `Node ${key}`,
+                                    description: location.description || ''
+                                });
+                            }
+                        });
+                    });
+                    return Array.from(unique.values());
+                },
+
+                ensureLocation() {
+                    const options = this.locationOptions;
+                    if (!options.length) {
+                        this.selectedLocation = null;
+                        return;
+                    }
+                    if (!options.find(loc => String(loc.id) === String(this.selectedLocation))) {
+                        this.selectedLocation = options[0].id;
+                    }
+                },
+
+                formatLocationOption(location) {
+                    if (!location) {
+                        return '';
+                    }
+                    if (location.description) {
+                        return `${location.name} · ${location.description}`;
+                    }
+                    return location.name;
+                },
+
+                findLocation(id) {
+                    if (!id) {
+                        return null;
+                    }
+                    const plan = this.currentPlan;
+                    if (plan && plan.locations) {
+                        const match = plan.locations.find(loc => String(loc.id) === String(id));
+                        if (match) {
+                            return match;
+                        }
+                    }
+                    return this.locations.find(loc => String(loc.id) === String(id)) || null;
                 }
             }));
         });
