@@ -48,6 +48,13 @@
             <div class="flex-row row d-flex justify-content-center justify-content-md-start">
                 @foreach ($servers as $server)
                  @if($server->location && $server->node && $server->nest && $server->egg)
+                    @php
+                        $billingPrice = $server->price_override ?? $server->product->price;
+                        $basePrice = $server->product->price;
+                        $memoryMb = $server->memory_override ?? $server->product->memory;
+                        $slotCount = $server->slot_override ?? $server->product->player_slots;
+                        $memoryDisplay = $memoryMb ? ($memoryMb >= 1024 ? number_format($memoryMb / 1024, 2).' GB' : $memoryMb.' MB') : __('N/A');
+                    @endphp
                     <div class="pl-0 pr-0 col-xl-3 col-lg-5 col-md-6 col-sm-6 col-xs-12 card ml-sm-2 mr-sm-3"
                         style="max-width: 350px">
                         <div class="card-header">
@@ -108,6 +115,28 @@
                                         <i data-toggle="popover" data-trigger="hover" data-html="true"
                                             data-content="{{ __('CPU') }}: {{ $server->product->cpu / 100 }} {{ __('vCores') }} <br/>{{ __('RAM') }}: {{ $server->product->memory }} MB <br/>{{ __('Disk') }}: {{ $server->product->disk }} MB <br/>{{ __('Backups') }}: {{ $server->product->backups }} <br/> {{ __('MySQL Databases') }}: {{ $server->product->databases }} <br/> {{ __('Allocations') }}: {{ $server->product->allocations }} <br/>{{ __('OOM Killer') }}: {{ $server->product->oom_killer ? __("enabled") : __("disabled") }} <br/> {{ __('Billing Period') }}: {{$server->product->billing_period}}"
                                             class="fas fa-info-circle"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2 row">
+                                    <div class="col-5">
+                                        {{ __('Memory') }}:
+                                    </div>
+                                    <div class="col-7">
+                                        {{ $memoryDisplay }}
+                                        @if($server->memory_override)
+                                            <span class="text-muted d-block small">{{ __('Base') }}: {{ $server->product->memory }} MB</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="mb-2 row">
+                                    <div class="col-5">
+                                        {{ __('Player Slots') }}:
+                                    </div>
+                                    <div class="col-7">
+                                        {{ $slotCount ?? __('N/A') }}
+                                        @if($server->slot_override && $server->product->player_slots)
+                                            <span class="text-muted d-block small">{{ __('Base') }}: {{ $server->product->player_slots }}</span>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -179,8 +208,13 @@
                                                class="fas fa-info-circle"></i>
                                             </div>
                                         <span>
-                                            {{ $server->product->display_price }}
+                                            {{ Currency::formatForDisplay($billingPrice) }}
                                         </span>
+                                        @if($server->price_override)
+                                            <div class="small text-muted">
+                                                {{ __('Base price') }}: {{ $server->product->display_price }}
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

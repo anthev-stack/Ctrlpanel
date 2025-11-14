@@ -26,6 +26,16 @@
     <!-- MAIN CONTENT -->
     <section class="content">
         <div class="container-fluid">
+            @php
+                $billingPrice = $server->price_override ?? $server->product->price;
+                $basePrice = $server->product->price;
+                $priceMultiplier = ($basePrice ?? 0) > 0 ? $billingPrice / $basePrice : 1;
+                $hourlyPrice = $server->product->getHourlyPrice() * $priceMultiplier;
+                $monthlyPrice = $server->product->getMonthlyPrice() * $priceMultiplier;
+                $memoryMb = $server->memory_override ?? $server->product->memory;
+                $memoryDisplay = $memoryMb ? ($memoryMb >= 1024 ? number_format($memoryMb / 1024, 2) . ' GB' : $memoryMb . 'MB') : __('N/A');
+                $slotCount = $server->slot_override ?? $server->product->player_slots;
+            @endphp
             <div class="pt-3 row">
                 <div class="mb-4 col-xl-3 col-sm-6 mb-xl-0">
                   <div class="card">
@@ -77,8 +87,19 @@
                           <div class="numbers">
                             <p class="mb-0 text-sm text-uppercase font-weight-bold">{{ __('MEMORY') }}</p>
                             <h5 class="font-weight-bolder">
-                              <span class="text-sm text-success font-weight-bolder">@if($server->product->memory == 0){{ __('Unlimited') }} @else {{$server->product->memory}}MB @endif</span>
+                              <span class="text-sm text-success font-weight-bolder">
+                                  @if(!$memoryMb)
+                                      {{ __('N/A') }}
+                                  @elseif($memoryMb == 0)
+                                      {{ __('Unlimited') }}
+                                  @else
+                                      {{ $memoryDisplay }}
+                                  @endif
+                              </span>
                             </h5>
+                            @if($server->memory_override)
+                                <small class="text-muted">{{ __('Base') }}: {{ $server->product->memory }} MB</small>
+                            @endif
                           </div>
                         </div>
                         <div class="col-4 text-end">
@@ -146,15 +167,18 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-sm-12 col-md-6 mb-3 mb-md-0">
+                <div class="col-sm-12 col-md-6 mb-3 mb-md-0">
                                     <div class="row">
                                         <div class="col-sm-4 col-md-5">
                                             <label>{{__('Hourly Price')}}</label>
                                         </div>
                                         <div class="col-sm-8 col-md-7">
                                             <span style="max-width: 250px;" class="d-inline-block text-truncate">
-                                              {{ Currency::formatForDisplay($server->product->getHourlyPrice()) }}
+                                              {{ Currency::formatForDisplay($hourlyPrice) }}
                                             </span>
+                                            @if($server->price_override)
+                                                <div class="small text-muted">{{ __('Base') }}: {{ Currency::formatForDisplay($server->product->getHourlyPrice()) }}</div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -165,8 +189,11 @@
                                         </div>
                                         <div class="col-sm-8 col-md-7">
                                             <span style="max-width: 250px;" class="d-inline-block text-truncate">
-                                              {{ Currency::formatForDisplay($server->product->getMonthlyPrice()) }}
+                                              {{ Currency::formatForDisplay($monthlyPrice) }}
                                             </span>
+                                            @if($server->price_override)
+                                                <div class="small text-muted">{{ __('Base') }}: {{ Currency::formatForDisplay($server->product->getMonthlyPrice()) }}</div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -203,6 +230,21 @@
                                             <span style="max-width: 250px;" class="d-inline-block text-truncate">
                                                 {{ $server->product->backups }}
                                             </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 col-md-6 mb-3 mb-md-0">
+                                    <div class="row">
+                                        <div class="col-sm-4 col-md-5">
+                                            <label>{{__('Player Slots')}}</label>
+                                        </div>
+                                        <div class="col-sm-8 col-md-7">
+                                            <span style="max-width: 250px;" class="d-inline-block text-truncate">
+                                                {{ $slotCount ?? __('N/A') }}
+                                            </span>
+                                            @if($server->slot_override && $server->product->player_slots)
+                                                <div class="small text-muted">{{ __('Base') }}: {{ $server->product->player_slots }}</div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

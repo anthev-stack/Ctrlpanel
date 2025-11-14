@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request as FacadesRequest;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 
 class ServerController extends Controller
@@ -330,12 +331,14 @@ class ServerController extends Controller
             'allocations' => $product->allocations,
         ];
 
+        $eggVariables = $this->applySlotVariable($egg, $request->input('egg_variables'), $totalSlots);
+
         $response = $this->pterodactyl->createServer(
             $server,
             $product,
             $egg,
             $allocationId,
-            $request->input('egg_variables'),
+            $eggVariables,
             $limits,
             $featureLimits
         );
@@ -669,6 +672,73 @@ class ServerController extends Controller
         });
 
         return $availableNodes->isEmpty() ? null : $availableNodes->first();
+    }
+
+    private function applySlotVariable(Egg $egg, ?string $rawVariables, int $totalSlots): ?string
+    {
+        if ($totalSlots <= 0) {
+            return $rawVariables;
+        }
+
+        $slotEnvVariable = $this->detectSlotEnvironmentVariable($egg);
+        if (!$slotEnvVariable) {
+            return $rawVariables;
+        }
+
+        $variables = $this->decodeEggVariables($rawVariables);
+        $found = false;
+
+        foreach ($variables as &$variable) {
+            if (($variable['env_variable'] ?? null) === $slotEnvVariable) {
+                $variable['filled_value'] = $totalSlots;
+                $found = true;
+                break;
+            }
+        }
+        unset($variable);
+
+        if (!$found) {
+            $variables[] = [
+                'env_variable' => $slotEnvVariable,
+                'filled_value' => $totalSlots,
+            ];
+        }
+
+        return json_encode($variables);
+    }
+
+    private function decodeEggVariables(?string $rawVariables): array
+    {
+        if (!$rawVariables) {
+            return [];
+        }
+
+        $decoded = json_decode($rawVariables, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function detectSlotEnvironmentVariable(Egg $egg): ?string
+    {
+        $environment = $egg->environment ?? [];
+        $preferred = ['MAX_PLAYERS', 'MAXPLAYERS', 'PLAYER_SLOTS', 'PLAYERS', 'SLOTS'];
+
+        foreach ($environment as $variable) {
+            $envVariable = $variable['env_variable'] ?? null;
+            if ($envVariable && in_array($envVariable, $preferred, true)) {
+                return $envVariable;
+            }
+        }
+
+        foreach ($environment as $variable) {
+            $envVariable = $variable['env_variable'] ?? null;
+            $name = strtolower(($variable['name'] ?? '') . ' ' . ($variable['description'] ?? ''));
+
+            if ($envVariable && Str::contains($name, ['slot', 'slots', 'player', 'players'])) {
+                return $envVariable;
+            }
+        }
+
+        return null;
     }
 
     public function validateDeploymentVariables(Request $request)
