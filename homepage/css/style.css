@@ -31,6 +31,9 @@
         transparent 2px,
         transparent 14px
     );
+    pointer-events: none;
+}
+
 .config-range::after {
     content: "";
     position: absolute;
@@ -71,6 +74,7 @@
 .range-wrapper {
     padding: 0.75rem 0;
 }
+
 :root {
     --bg: #060818;
     --card: #0e1126;
