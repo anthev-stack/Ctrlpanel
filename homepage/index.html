@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle fill='%236366f1' cx='32' cy='32' r='32'/%3E%3Ctext x='32' y='40' font-size='28' text-anchor='middle' fill='%23fff' font-family='Inter, sans-serif'%3EGC%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 <body>
     <header class="hero">
@@ -72,7 +73,6 @@
         </div>
     </section>
 
-    <div x-data="configureApp()" x-init="init()">
     <div x-data="configureApp()" x-init="init()">
     <section id="servers" class="section section-alt">
             <h2>Servers</h2>
@@ -245,14 +245,12 @@
             Alpine.data('configureApp', () => ({
                 plans: [],
                 locations: [
-                    { value: 'sydney', label: 'Sydney, AU' },
-                    { value: 'los-angeles', label: 'Los Angeles, USA' },
-                    { value: 'frankfurt', label: 'Frankfurt, EU' },
-                    { value: 'singapore', label: 'Singapore' }
+                    { value: 'syd.gamecontrol.cc', label: 'Sydney, Australia (syd.gamecontrol.cc)' },
+                    { value: 'node-01', label: 'US West (node-01)' }
                 ],
                 loading: true,
                 selectedPlan: null,
-                selectedLocation: 'sydney',
+                selectedLocation: 'syd.gamecontrol.cc',
                 ramSteps: 0,
                 slotSteps: 0,
                 totalPrice: 0,
