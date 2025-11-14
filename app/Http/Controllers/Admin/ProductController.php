@@ -110,7 +110,9 @@ class ProductController extends Controller
 
         $disabled = ! is_null($request->input('disabled'));
         $oomkiller = ! is_null($request->input('oom_killer'));
-        $product = Product::create(array_merge($request->all(), ['disabled' => $disabled, 'oom_killer' => $oomkiller]));
+        $payload = $request->all();
+        $payload['memory_increment_mb'] = $this->convertGbToMb($request->input('memory_increment_mb'));
+        $product = Product::create(array_merge($payload, ['disabled' => $disabled, 'oom_killer' => $oomkiller]));
 
         //link nodes and eggs
         $product->eggs()->attach($request->input('eggs'));
@@ -194,7 +196,9 @@ class ProductController extends Controller
 
         $disabled = ! is_null($request->input('disabled'));
         $oomkiller = ! is_null($request->input('oom_killer'));
-        $product->update(array_merge($request->all(), ['disabled' => $disabled, 'oom_killer' => $oomkiller]));
+        $payload = $request->all();
+        $payload['memory_increment_mb'] = $this->convertGbToMb($request->input('memory_increment_mb'));
+        $product->update(array_merge($payload, ['disabled' => $disabled, 'oom_killer' => $oomkiller]));
 
         //link nodes and eggs
         $product->eggs()->detach();
@@ -303,5 +307,14 @@ class ProductController extends Controller
             })
             ->rawColumns(['actions', 'disabled'])
             ->make();
+    }
+
+    private function convertGbToMb($value): ?int
+    {
+        if (is_null($value) || $value === '') {
+            return null;
+        }
+
+        return (int) round($value * 1024);
     }
 }

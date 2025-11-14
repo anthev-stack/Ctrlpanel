@@ -375,10 +375,13 @@
                                 <div class="row">
                                     <div class="col-lg-6">
                                         <div class="form-group">
-                                            <label for="memory_increment_mb">{{ __('Memory Increment Size (MB)') }}</label>
-                                            <input value="{{ old('memory_increment_mb', optional($product)->memory_increment_mb) }}"
-                                                id="memory_increment_mb" name="memory_increment_mb" type="number" min="0"
+                                            <label for="memory_increment_mb">{{ __('Memory Increment Size (GB)') }}</label>
+                                            <input value="{{ old('memory_increment_mb', optional($product)->memory_increment_mb ? optional($product)->memory_increment_mb / 1024 : null) }}"
+                                                id="memory_increment_mb" name="memory_increment_mb" type="number" min="0" step="0.1"
                                                 class="form-control @error('memory_increment_mb') is-invalid @enderror">
+                                            <small class="form-text text-muted">
+                                                {{ __('Each increment adds this many gigabytes to the server.') }}
+                                            </small>
                                             @error('memory_increment_mb')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -403,6 +406,9 @@
                                             <input value="{{ old('memory_increment_max_steps', optional($product)->memory_increment_max_steps) }}"
                                                 id="memory_increment_max_steps" name="memory_increment_max_steps" type="number" min="0"
                                                 class="form-control @error('memory_increment_max_steps') is-invalid @enderror">
+                                            <small class="form-text text-muted">
+                                                {{ __('Total additional memory = increments × increment size.') }}
+                                            </small>
                                             @error('memory_increment_max_steps')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
