@@ -78,15 +78,11 @@
         <!-- Right navbar links -->
         <ul class="ml-auto navbar-nav">
 
-            @php
-                $generalSettings = app(\App\Settings\GeneralSettings::class);
-                $user = Auth::user();
-            @endphp
-
-            @if ($user)
+            @auth
                 @php
+                    $generalSettings = app(\App\Settings\GeneralSettings::class);
                     $creditsDisplayName = $generalSettings->credits_display_name ?? 'Credits';
-                    $creditBalanceRaw = $user->credits ?? 0;
+                    $creditBalanceRaw = Auth::user()->credits ?? 0;
                     $creditBalanceFormatted = Currency::formatForDisplay($creditBalanceRaw);
                     $creditBalanceCredits = $creditBalanceRaw / 1000;
                     $creditBalanceAud = number_format($creditBalanceCredits / 100, 2);
@@ -113,7 +109,7 @@
                         </a>
                     </div>
                 </li>
-            @endif
+            @endauth
 
             <li class="nav-item dropdown no-arrow">
                 <a class="px-2 nav-link dropdown-toggle no-arrow" href="#" id="userDropdown" role="button"
