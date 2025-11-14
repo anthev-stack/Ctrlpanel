@@ -71,137 +71,122 @@
         </div>
     </section>
 
-    <section id="servers" class="section section-alt">
-        <h2>Servers</h2>
-        <p class="section-lead">Pick a default build or configure it your way.</p>
-        <div class="grid grid-3">
-            <div class="card pricing-card">
-                <h3>Minecraft</h3>
-                <p class="price">$18<span>/month</span></p>
-                <ul>
-                    <li>3 GB RAM · 10 slots</li>
-                    <li>80 GB NVMe storage</li>
-                    <li>Unlimited worlds & plugins</li>
-                </ul>
-                <button class="btn btn-block" onclick="scrollToConfigurator('minecraft')">Configure</button>
+    <div x-data="configureApp()" x-init="init()">
+        <section id="servers" class="section section-alt">
+            <h2>Servers</h2>
+            <p class="section-lead">Pick a default build or configure it your way.</p>
+            <div class="grid grid-3" x-show="plans.length">
+                <template x-for="plan in plans" :key="plan.slug">
+                    <div class="card pricing-card" :class="{'featured': selectedPlan === plan.slug}">
+                        <h3 x-text="plan.name"></h3>
+                        <p class="price" x-text="plan.price_display"></p>
+                        <ul>
+                            <li x-text="planBaseRamLabel(plan) + ' · ' + planBaseSlotsLabel(plan)"></li>
+                            <li x-text="plan.description"></li>
+                        </ul>
+                        <button class="btn btn-block" @click="selectPlanAndScroll(plan.slug)">Configure</button>
+                    </div>
+                </template>
             </div>
-            <div class="card pricing-card featured">
-                <div class="badge">Popular</div>
-                <h3>Counter-Strike 2</h3>
-                <p class="price">$24<span>/month</span></p>
-                <ul>
-                    <li>2.5 GB RAM · 12 slots</li>
-                    <li>75 GB NVMe storage</li>
-                    <li>1 vCPU · Burst 100%</li>
-                </ul>
-                <button class="btn btn-block" onclick="scrollToConfigurator('cs2')">Configure</button>
+            <div class="card pricing-card" x-show="loading">
+                <p>Loading servers…</p>
             </div>
-            <div class="card pricing-card">
-                <h3>Rust</h3>
-                <p class="price">$32<span>/month</span></p>
-                <ul>
-                    <li>6 GB RAM · 50 slots</li>
-                    <li>120 GB NVMe storage</li>
-                    <li>Anti-cheat ready</li>
-                </ul>
-                <button class="btn btn-block" onclick="scrollToConfigurator('rust')">Configure</button>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="configure" class="section">
-        <h2>Configure & Launch</h2>
-        <p class="section-lead">Dial in RAM, slots, and regions—then head to billing to finish checkout.</p>
-        <div class="configurator-inline" x-data="configureApp()">
-            <div class="config-card">
-                <h3>Game</h3>
-                <div class="option-list">
-                    <template x-for="plan in Object.values(plans)" :key="plan.id">
-                        <label class="option-tile" :class="{'active': selectedPlan === plan.id}">
-                            <input type="radio" class="d-none" :value="plan.id" x-model="selectedPlan">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong x-text="plan.name"></strong>
-                                    <p class="mb-0 text-muted" x-text="plan.description"></p>
+        <section id="configure" class="section">
+            <h2>Configure & Launch</h2>
+            <p class="section-lead">Dial in RAM, slots, and regions—then head to billing to finish checkout.</p>
+            <div class="configurator-inline">
+                <div class="config-card">
+                    <h3>Game</h3>
+                    <div class="option-list">
+                        <template x-for="plan in plans" :key="plan.slug">
+                            <label class="option-tile" :class="{'active': selectedPlan === plan.slug}">
+                                <input type="radio" class="d-none" :value="plan.slug" x-model="selectedPlan" @change="setPlan(plan.slug)">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong x-text="plan.name"></strong>
+                                        <p class="mb-0 text-muted" x-text="plan.description"></p>
+                                    </div>
+                                    <span class="badge badge-light" x-text="plan.price_display"></span>
                                 </div>
-                                <span class="badge badge-light"
-                                    x-text="formatCredits(plan.basePrice) + ' credits'"></span>
-                            </div>
-                        </label>
-                    </template>
-                </div>
-                <div class="mt-3">
-                    <label>Location</label>
-                    <select class="custom-select mt-1" x-model="selectedLocation">
-                        <option value="dallas">Dallas, USA</option>
-                        <option value="new-york">New York, USA</option>
-                        <option value="frankfurt">Frankfurt, EU</option>
-                        <option value="sydney">Sydney, AU</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="config-card stretch">
-                <h3>Resources</h3>
-
-                <div class="range-group" x-show="currentPlan">
-                    <div class="range-label">
-                        <span>RAM</span>
-                        <span x-text="ramLabel()"></span>
+                            </label>
+                        </template>
                     </div>
-                    <input type="range" min="0" :max="currentPlan.maxRamSteps" step="1" class="config-range"
-                        x-model.number="ramSteps" @input="updatePrice">
-                    <small class="text-muted" x-text="ramDescription()"></small>
+                    <div class="mt-3">
+                        <label>Location</label>
+                        <select class="custom-select mt-1" x-model="selectedLocation">
+                            <option value="dallas">Dallas, USA</option>
+                            <option value="new-york">New York, USA</option>
+                            <option value="frankfurt">Frankfurt, EU</option>
+                            <option value="sydney">Sydney, AU</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="range-group" x-show="currentPlan">
-                    <div class="range-label">
+                <div class="config-card stretch">
+                    <h3>Resources</h3>
+
+                    <div class="range-group" x-show="hasMemoryIncrements()">
+                        <div class="range-label">
+                            <span>RAM</span>
+                            <span x-text="ramLabel()"></span>
+                        </div>
+                        <input type="range" min="0" :max="ramMaxSteps()" step="1" class="config-range"
+                            x-model.number="ramSteps" @input="updatePrice" :disabled="!hasMemoryIncrements()">
+                        <small class="text-muted" x-text="ramDescription()"></small>
+                    </div>
+
+                    <div class="range-group" x-show="hasSlotIncrements()">
+                        <div class="range-label">
+                            <span>Player Slots</span>
+                            <span x-text="slotLabel()"></span>
+                        </div>
+                        <input type="range" min="0" :max="slotMaxSteps()" step="1" class="config-range"
+                            x-model.number="slotSteps" @input="updatePrice" :disabled="!hasSlotIncrements()">
+                        <small class="text-muted" x-text="slotDescription()"></small>
+                    </div>
+
+                    <div class="alert alert-info" x-show="loading">
+                        Loading configuration options…
+                    </div>
+                    <div class="alert alert-info" x-show="!currentPlan && !loading">
+                        Select a game on the left to unlock resource controls.
+                    </div>
+                </div>
+
+                <div class="config-card summary-box">
+                    <h3>Summary</h3>
+                    <div class="summary-line">
+                        <span>Game</span>
+                        <strong x-text="currentPlan ? currentPlan.name : '—'"></strong>
+                    </div>
+                    <div class="summary-line">
+                        <span>Location</span>
+                        <strong x-text="locationLabel()"></strong>
+                    </div>
+                    <div class="summary-line">
+                        <span>Memory</span>
+                        <strong x-text="ramLabel()"></strong>
+                    </div>
+                    <div class="summary-line">
                         <span>Player Slots</span>
-                        <span x-text="slotLabel()"></span>
+                        <strong x-text="slotLabel()"></strong>
                     </div>
-                    <input type="range" min="0" :max="currentPlan.maxSlotSteps" step="1" class="config-range"
-                        x-model.number="slotSteps" @input="updatePrice">
-                    <small class="text-muted" x-text="slotDescription()"></small>
-                </div>
-
-                <div class="alert alert-info" x-show="!currentPlan">
-                    Select a game on the left to unlock resource controls.
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span x-text="formatCredits(totalPrice) + ' credits / month'"></span>
+                    </div>
+                    <p class="mt-2 text-muted" style="font-size: 0.9rem;">
+                        Final provisioning and billing happens inside our secure client area.
+                    </p>
+                    <button class="btn btn-block btn" type="button" @click="continueToBilling">
+                        Continue to Billing
+                    </button>
                 </div>
             </div>
-
-            <div class="config-card summary-box">
-                <h3>Summary</h3>
-                <div class="summary-line">
-                    <span>Game</span>
-                    <strong x-text="currentPlan ? currentPlan.name : '—'"></strong>
-                </div>
-                <div class="summary-line">
-                    <span>Location</span>
-                    <strong x-text="locationLabel()"></strong>
-                </div>
-                <div class="summary-line">
-                    <span>Memory</span>
-                    <strong x-text="ramLabel()"></strong>
-                </div>
-                <div class="summary-line">
-                    <span>Player Slots</span>
-                    <strong x-text="slotLabel()"></strong>
-                </div>
-                <div class="summary-total">
-                    <span>Total</span>
-                    <span x-text="formatCredits(totalPrice) + ' credits / month'"></span>
-                </div>
-                <p class="mt-2 text-muted" style="font-size: 0.9rem;">
-                    Final provisioning and billing happens inside our secure client area.
-                </p>
-                <a class="btn btn-block btn"
-                    href="https://billing.gamecontrol.cc/register"
-                    target="_blank" rel="noopener">
-                    Continue to Billing
-                </a>
-            </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
     <section id="faq" class="section">
         <h2>Frequently Asked Questions</h2>

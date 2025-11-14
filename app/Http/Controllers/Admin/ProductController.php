@@ -99,6 +99,7 @@ class ProductController extends Controller
             'memory_increment_mb' => 'nullable|numeric|max:1000000|min:0',
             'memory_increment_price' => 'nullable|numeric|max:1000000|min:0',
             'memory_increment_max_steps' => 'nullable|numeric|max:1000000|min:0',
+            'is_public' => 'nullable|boolean',
             'nodes.*' => 'required|exists:nodes,id',
             'eggs.*' => 'required|exists:eggs,id',
             'disabled' => 'nullable',
@@ -112,7 +113,11 @@ class ProductController extends Controller
         $oomkiller = ! is_null($request->input('oom_killer'));
         $payload = $request->all();
         $payload['memory_increment_mb'] = $this->convertGbToMb($request->input('memory_increment_mb'));
-        $product = Product::create(array_merge($payload, ['disabled' => $disabled, 'oom_killer' => $oomkiller]));
+        $product = Product::create(array_merge($payload, [
+            'disabled' => $disabled,
+            'oom_killer' => $oomkiller,
+            'is_public' => !is_null($request->input('is_public')),
+        ]));
 
         //link nodes and eggs
         $product->eggs()->attach($request->input('eggs'));
@@ -186,6 +191,7 @@ class ProductController extends Controller
             'memory_increment_mb' => 'nullable|numeric|max:1000000|min:0',
             'memory_increment_price' => 'nullable|numeric|max:1000000|min:0',
             'memory_increment_max_steps' => 'nullable|numeric|max:1000000|min:0',
+            'is_public' => 'nullable|boolean',
             'nodes.*' => 'required|exists:nodes,id',
             'eggs.*' => 'required|exists:eggs,id',
             'disabled' => 'nullable',
@@ -198,7 +204,11 @@ class ProductController extends Controller
         $oomkiller = ! is_null($request->input('oom_killer'));
         $payload = $request->all();
         $payload['memory_increment_mb'] = $this->convertGbToMb($request->input('memory_increment_mb'));
-        $product->update(array_merge($payload, ['disabled' => $disabled, 'oom_killer' => $oomkiller]));
+        $product->update(array_merge($payload, [
+            'disabled' => $disabled,
+            'oom_killer' => $oomkiller,
+            'is_public' => !is_null($request->input('is_public')),
+        ]));
 
         //link nodes and eggs
         $product->eggs()->detach();

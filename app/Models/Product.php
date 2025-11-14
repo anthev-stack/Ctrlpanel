@@ -40,7 +40,8 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'default_billing_priority' => BillingPriority::class
+        'default_billing_priority' => BillingPriority::class,
+        'is_public' => 'boolean',
     ];
 
     public static function boot()

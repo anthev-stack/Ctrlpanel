@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PublicPlanController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ServerController;
 use App\Http\Controllers\Api\UserController;
@@ -40,3 +41,5 @@ Route::middleware('api.token')->group(function () {
     Route::delete('/notifications/{user}/{notification}', [NotificationController::class, 'deleteOne']);
     Route::delete('/notifications/{user}', [NotificationController::class, 'delete']);
 });
+
+Route::get('/public/plans', [PublicPlanController::class, 'index']);

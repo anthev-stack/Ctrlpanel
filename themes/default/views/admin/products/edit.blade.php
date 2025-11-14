@@ -57,6 +57,15 @@
                                                 data-content="{{ __('Will hide this option from being selected') }}"
                                                 class="fas fa-info-circle"></i></label>
                                     </div>
+                                    <div class="mr-3 custom-control custom-switch">
+                                        <input type="checkbox" name="is_public"
+                                               class="custom-control-input" id="is_public_edit"
+                                               @checked($product->is_public)>
+                                        <label class="custom-control-label" for="is_public_edit">{{ __('Show on Marketing Site') }} <i
+                                                data-toggle="popover" data-trigger="hover"
+                                                data-content="{{ __('Enables this product for the public API and homepage configurator') }}"
+                                                class="fas fa-info-circle"></i></label>
+                                    </div>
                                 </div>
                                 
                                 <div class="row">
