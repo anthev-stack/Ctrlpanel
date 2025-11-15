@@ -9,7 +9,7 @@
         <div class="auth-container">
             <div class="auth-intro">
                 <h1>Launch your own game servers with confidence.</h1>
-                <p>Create a GameControl account to access hourly billing, resource configurators, and automated provisioning.</p>
+                <p>Create a GameControl account to access monthly billing, resource configurators, and automated provisioning.</p>
                 <ul>
                     <li>Credits, referrals, and partner tooling baked in</li>
                     <li>Powerful Pterodactyl integration</li>
@@ -18,7 +18,7 @@
             </div>
             <div class="auth-card">
                 <div class="auth-brand">
-                    <strong>{{ config('app.name', 'GameControl') }}</strong>
+                    <strong>{{ config('app.name', 'Gamecontrol') }}</strong>
                     <span>Command Centre</span>
                 </div>
                 <h2 class="auth-title">{{ __('Create your account') }}</h2>

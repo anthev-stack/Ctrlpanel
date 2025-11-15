@@ -12,12 +12,12 @@
                 <ul>
                     <li>{{ __('Fast, secure password recovery flow') }}</li>
                     <li>{{ __('Modern encryption and recaptcha protection') }}</li>
-                    <li>{{ __('24/7 support standing by if you need it') }}</li>
+                    <li>{{ __('Monthly billing with hourly-grade controls') }}</li>
                 </ul>
             </div>
             <div class="auth-card">
                 <div class="auth-brand">
-                    <strong>{{ config('app.name', 'GameControl') }}</strong>
+                    <strong>{{ config('app.name', 'Gamecontrol') }}</strong>
                     <span>Command Centre</span>
                 </div>
                 <h2 class="auth-title">{{ __('Forgot your password?') }}</h2>

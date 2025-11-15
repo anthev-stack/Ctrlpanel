@@ -10,14 +10,14 @@
                 <h1>Dial in your next server in minutes.</h1>
                 <p>GameControl Command Centre keeps your billing, provisioning, and community tools in one sleek place.</p>
                 <ul>
-                    <li>Instant provisioning & hourly billing</li>
+                    <li>Instant provisioning & monthly billing</li>
                     <li>Live resource scaling for RAM and slots</li>
                     <li>Secure by design with MFA and recaptcha support</li>
                 </ul>
             </div>
             <div class="auth-card">
                 <div class="auth-brand">
-                    <strong>{{ config('app.name', 'GameControl') }}</strong>
+                    <strong>{{ config('app.name', 'Gamecontrol') }}</strong>
                     <span>Command Centre</span>
                 </div>
                 <h2 class="auth-title">{{ __('Welcome back') }}</h2>

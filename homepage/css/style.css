@@ -184,6 +184,7 @@ a {
     display: flex;
     flex-direction: column;
     line-height: 1.1;
+    align-items: center;
 }
 
 .logo span {
@@ -194,8 +195,8 @@ a {
 }
 
 .logo small {
-    font-size: 0.72rem;
-    letter-spacing: 0.3em;
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
     text-transform: uppercase;
     color: rgba(148, 163, 184, 0.8);
     font-weight: 500;

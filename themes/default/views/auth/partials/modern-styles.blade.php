@@ -1,7 +1,8 @@
 @push('styles')
     <style>
         :root {
-            --auth-bg: #05060f;
+            --auth-bg-start: #0c0f2a;
+            --auth-bg-end: #050615;
             --auth-card-bg: rgba(6, 8, 24, 0.92);
             --auth-card-border: rgba(148, 163, 184, 0.2);
             --auth-primary: #6366f1;
@@ -13,7 +14,7 @@
         .auth-modern-body {
             min-height: 100vh;
             margin: 0;
-            background: radial-gradient(circle at top, rgba(99, 102, 241, 0.4), rgba(5, 6, 15, 0.98));
+            background: radial-gradient(circle at top, rgba(79, 70, 229, 0.35), rgba(8, 11, 31, 0.95));
             font-family: 'Inter', 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: var(--auth-text);
             display: flex;
