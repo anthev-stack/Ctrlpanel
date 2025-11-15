@@ -79,6 +79,7 @@
     );
     $hasAdminSidebar = $user ? $user->hasAnyPermission($adminPermissionSets) : false;
 @endphp
+@php($hasAdminSidebar = $hasAdminSidebar ?? false)
 <body class="sidebar-mini layout-fixed dark-mode {{ $hasAdminSidebar ? '' : 'sidebar-collapse no-admin-sidebar' }}" style="height: auto;">
 <div class="wrapper">
     <!-- Navbar -->
