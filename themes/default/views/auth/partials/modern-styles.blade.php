@@ -14,7 +14,11 @@
         .auth-modern-body {
             min-height: 100vh;
             margin: 0;
-            background: radial-gradient(circle at top, rgba(79, 70, 229, 0.35), rgba(8, 11, 31, 0.95));
+            background-color: #060818;
+            background-image: radial-gradient(circle at top, rgba(79, 70, 229, 0.35), rgba(8, 11, 31, 0.95));
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
             font-family: 'Inter', 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: var(--auth-text);
             display: flex;
