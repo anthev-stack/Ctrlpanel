@@ -11,7 +11,7 @@
 
 .config-card {
     background: transparent;
-    border: 1px solid var(--border);
+    border: none;
     backdrop-filter: blur(12px);
 }
 
@@ -187,11 +187,26 @@ a {
     text-transform: uppercase;
 }
 
+.nav-drawer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex: 1;
+}
+
 .nav-links {
     display: flex;
     gap: 1.5rem;
     align-items: center;
     transition: opacity 0.2s ease;
+}
+
+.nav-links--secondary {
+    gap: 1rem;
+    margin-left: 1rem;
+    padding-left: 1.5rem;
+    border-left: 1px solid rgba(148, 163, 184, 0.3);
 }
 
 .nav-links a {
@@ -240,6 +255,7 @@ a {
 
 .nav-cta {
     flex-shrink: 0;
+    margin-left: 1.5rem;
 }
 
 .hero-content {
@@ -412,7 +428,7 @@ a {
     background: var(--primary);
     color: #fff;
     padding: 0.8rem 1.6rem;
-    border-radius: 999px;
+    border-radius: 0.55rem;
     font-weight: 600;
     font-size: 0.95rem;
     border: none;
@@ -504,24 +520,40 @@ a {
         display: flex;
     }
 
-    .nav-links {
+    .nav-drawer {
         display: none;
         position: absolute;
         top: 100%;
         left: 0;
         right: 0;
         flex-direction: column;
+        align-items: flex-start;
         background: rgba(6, 8, 24, 0.98);
         border: 1px solid var(--border);
         border-radius: 0.75rem;
         padding: 1.5rem;
-        gap: 1rem;
+        gap: 1.25rem;
         box-shadow: 0 25px 50px rgba(2, 6, 23, 0.45);
         z-index: 10;
     }
 
-    .nav-links.open {
+    .nav-drawer.open {
         display: flex;
+    }
+
+    .nav-links,
+    .nav-links--secondary {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .nav-links--secondary {
+        border-left: none;
+        padding-left: 0;
+        margin-left: 0;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
     }
 
     .nav-links a {
