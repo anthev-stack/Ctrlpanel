@@ -27,7 +27,6 @@ export default defineConfig({
         },
     },
     build: {
-        manifest: true,
-        manifestDir: ".",
+        manifest: "manifest.json",
     },
 });
