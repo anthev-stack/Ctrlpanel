@@ -26,4 +26,8 @@ export default defineConfig({
             "~bootstrap": path.resolve("node_modules/bootstrap"),
         },
     },
+    build: {
+        manifest: true,
+        manifestDir: ".",
+    },
 });
