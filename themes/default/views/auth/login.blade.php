@@ -1,156 +1,117 @@
 @extends('layouts.app')
 
 @section('content')
-  @php($website_settings = app(App\Settings\WebsiteSettings::class))
-  <body class="hold-transition dark-mode login-page">
-  <div class="login-box">
-    <!-- /.login-logo -->
-    <div class="card card-outline card-primary">
-      <div class="text-center card-header">
-        <a href="{{ route('welcome') }}" class="mb-2 h1"><b
-            class="mr-1">{{ config('app.name', 'Laravel') }}</b></a>
-        @if ($website_settings->enable_login_logo)
-          <img
-            src="{{ \Illuminate\Support\Facades\Storage::disk('public')->exists('logo.png') ? asset('storage/logo.png') : asset('images/ctrlpanel_logo.png') }}"
-            alt="{{ config('app.name', 'CtrlPanel.gg') }} Logo"
-            style="opacity: .8; max-width:100%; height: 150px; margin-top: 10px;">
-        @endif
-      </div>
-      <div class="pt-0 card-body">
-        <p class="login-box-msg">{{ __('Sign in to start your session') }}</p>
+    @include('auth.partials.modern-styles')
+    @php($website_settings = app(App\Settings\WebsiteSettings::class))
 
-        @if (session('message'))
-          <div class="alert alert-danger">{{ session('message') }}</div>
-        @endif
-
-        <form action="{{ route('login') }}" method="post">
-          @csrf
-          @if (Session::has('error'))
-            <span class="text-danger" role="alert">
-                                <small><strong>{{ Session::get('error') }}</strong></small>
-                            </span>
-          @endif
-
-          <div class="form-group">
-            <div class="mb-3 input-group">
-              <input type="text" name="email"
-                     class="form-control @error('email') is-invalid @enderror @error('name') is-invalid @enderror"
-                     placeholder="{{ __('Email or Username') }}">
-              <div class="input-group-append">
-                <div class="input-group-text">
-                  <span class="fas fa-envelope"></span>
-                </div>
-              </div>
-
+    <body class="auth-modern-body">
+        <div class="auth-container">
+            <div class="auth-intro">
+                <h1>Dial in your next server in minutes.</h1>
+                <p>GameControl Command Centre keeps your billing, provisioning, and community tools in one sleek place.</p>
+                <ul>
+                    <li>Instant provisioning & hourly billing</li>
+                    <li>Live resource scaling for RAM and slots</li>
+                    <li>Secure by design with MFA and recaptcha support</li>
+                </ul>
             </div>
-            @if ($errors->get("email") || $errors->get("name"))
-              <span class="text-danger" role="alert">
-                                    <small><strong>{{ $errors->first('email') ? $errors->first('email') : $errors->first('name') }}</strong></small>
-                                </span>
+            <div class="auth-card">
+                <div class="auth-brand">
+                    <strong>{{ config('app.name', 'GameControl') }}</strong>
+                    <span>Command Centre</span>
+                </div>
+                <h2 class="auth-title">{{ __('Welcome back') }}</h2>
+                <p class="auth-subtitle">{{ __('Sign in to continue to your dashboard.') }}</p>
+
+                @if (session('message'))
+                    <div class="auth-alert">{{ session('message') }}</div>
+                @endif
+
+                <form action="{{ route('login') }}" method="post">
+                    @csrf
+                    @if (Session::has('error'))
+                        <p class="auth-error">{{ Session::get('error') }}</p>
+                    @endif
+
+                    <div class="auth-field">
+                        <label for="login-identity">{{ __('Email or Username') }}</label>
+                        <input id="login-identity" type="text" name="email"
+                               class="auth-input @error('email') is-invalid @enderror @error('name') is-invalid @enderror"
+                               placeholder="{{ __('Enter your credentials') }}" value="{{ old('email') }}">
+                        @if ($errors->get('email') || $errors->get('name'))
+                            <p class="auth-error">
+                                {{ $errors->first('email') ? $errors->first('email') : $errors->first('name') }}
+                            </p>
+                        @endif
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="login-password">{{ __('Password') }}</label>
+                        <input id="login-password" type="password" name="password"
+                               class="auth-input @error('password') is-invalid @enderror"
+                               placeholder="{{ __('Your secret phrase') }}">
+                        @error('password')
+                            <p class="auth-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    @php($recaptchaVersion = app(App\Settings\GeneralSettings::class)->recaptcha_version)
+                    @if ($recaptchaVersion)
+                        <div class="auth-field">
+                            @switch($recaptchaVersion)
+                                @case('v2')
+                                    {!! htmlFormSnippet() !!}
+                                    @break
+                                @case('v3')
+                                    {!! RecaptchaV3::field('recaptchathree') !!}
+                                    @break
+                                @case('turnstile')
+                                    <x-turnstile-widget
+                                        theme="dark"
+                                        language="en-us"
+                                        size="normal"
+                                    />
+                                    @error('cf-turnstile-response')
+                                        <p class="auth-error">{{ $message }}</p>
+                                    @enderror
+                                    @break
+                            @endswitch
+
+                            @error('g-recaptcha-response')
+                                <p class="auth-error">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endif
+
+                    <div class="auth-actions">
+                        <label class="auth-checkbox" for="remember">
+                            <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                            <span>{{ __('Remember me') }}</span>
+                        </label>
+                        <button type="submit" class="auth-btn">{{ __('Sign In') }}</button>
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                </form>
+
+                <div class="auth-links">
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}">{{ __('Forgot your password?') }}</a>
+                    @endif
+                    <a href="{{ route('register') }}">{{ __('Need an account? Register') }}</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-legal">
+            @if ($website_settings->show_imprint)
+                <a target="_blank" href="{{ route('terms', 'imprint') }}">{{ __('Imprint') }}</a> •
             @endif
-          </div>
-
-          <div class="form-group">
-            <div class="mb-3 input-group">
-              <input type="password" name="password"
-                     class="form-control @error('password') is-invalid @enderror"
-                     placeholder="{{ __('Password') }}">
-              <div class="input-group-append">
-                <div class="input-group-text">
-                  <span class="fas fa-lock"></span>
-                </div>
-              </div>
-
-            </div>
-            @error('password')
-            <span class="text-danger" role="alert">
-                                    <small><strong>{{ $message }}</strong></small>
-                                </span>
-            @enderror
-          </div>
-
-
-          @php ($recaptchaVersion = app(App\Settings\GeneralSettings::class)->recaptcha_version)
-          @if ($recaptchaVersion)
-            <div class="mb-3 input-group">
-              @switch($recaptchaVersion)
-                @case("v2")
-                  {!! htmlFormSnippet() !!}
-                  @break
-                @case("v3")
-                  {!! RecaptchaV3::field('recaptchathree') !!}
-                  @break
-                @case("turnstile")
-                  <x-turnstile-widget
-                    theme="dark"
-                    language="en-us"
-                    size="normal"
-                  />
-                  @error('cf-turnstile-response')
-                  <p class="error">{{ $message }}</p>
-                  @enderror
-                @break
-              @endswitch
-
-              @error('g-recaptcha-response')
-              <span class="text-danger" role="alert">
-        <small><strong>{{ $message }}</strong></small>
-      </span>
-              @enderror
-            </div>
-          @endif
-
-
-          <div class="row">
-            <div class="col-8">
-              <div class="icheck-primary">
-                <input type="checkbox" name="remember" id="remember"
-                  {{ old('remember') ? 'checked' : '' }}>
-                <label for="remember">
-                  {{ __('Remember Me') }}
-                </label>
-              </div>
-            </div>
-            <!-- /.col -->
-            <div class="col-4">
-              <button type="submit" class="btn btn-primary btn-block">{{ __('Sign In') }}</button>
-            </div>
-            <!-- /.col -->
-          </div>
-
-          <input type="hidden" name="_token" value="{{ csrf_token() }}">
-        </form>
-        <p class="mb-1">
-          @if (Route::has('password.request'))
-            <a class="" href="{{ route('password.request') }}">
-              {{ __('Forgot Your Password?') }}
-            </a>
-          @endif
-        </p>
-        <p class="mb-0">
-          <a href="{{ route('register') }}" class="text-center">{{ __('Register a new membership') }}</a>
-        </p>
-      </div>
-      <!-- /.card-body -->
-    </div>
-    <!-- /.card -->
-  </div>
-  <!-- /.login-box -->
-
-  {{-- imprint and privacy policy --}}
-  <div class="fixed-bottom ">
-    <div class="container text-center">
-      @if ($website_settings->show_imprint)
-        <a target="_blank" href="{{ route('terms', 'imprint') }}"><strong>{{ __('Imprint') }}</strong></a> |
-      @endif
-      @if ($website_settings->show_privacy)
-        <a target="_blank" href="{{ route('terms', 'privacy') }}"><strong>{{ __('Privacy') }}</strong></a>
-      @endif
-      @if ($website_settings->show_tos)
-        | <a target="_blank"
-             href="{{ route('terms', 'tos') }}"><strong>{{ __('Terms of Service') }}</strong></a>
-      @endif
-    </div>
-  </div>
-  </body>
+            @if ($website_settings->show_privacy)
+                <a target="_blank" href="{{ route('terms', 'privacy') }}">{{ __('Privacy') }}</a>
+            @endif
+            @if ($website_settings->show_tos)
+                • <a target="_blank" href="{{ route('terms', 'tos') }}">{{ __('Terms of Service') }}</a>
+            @endif
+        </div>
+    </body>
 @endsection

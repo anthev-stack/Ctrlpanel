@@ -24,6 +24,7 @@
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="preload" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}" as="style"
         onload="this.onload=null;this.rel='stylesheet'">
@@ -41,6 +42,7 @@
         @break
     @endswitch
   @endif
+    @stack('styles')
     @vite('themes/default/sass/app.scss')
 </head>
 @yield('content')
