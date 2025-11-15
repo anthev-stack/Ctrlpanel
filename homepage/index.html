@@ -15,15 +15,20 @@
     <header class="hero">
         <nav class="nav">
             <div class="logo">GameControl</div>
-            <div class="nav-links">
+            <button class="nav-toggle" type="button" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-links" id="primary-nav">
                 <a href="#features">Features</a>
                 <a href="#servers">Servers</a>
                 <a href="#configure">Configurator</a>
                 <a href="#faq">FAQ</a>
-                <a class="btn btn-outline" href="https://panel.gamecontrol.cc" target="_blank" rel="noopener">Panel Login</a>
-                <a class="btn btn-outline" href="https://billing.gamecontrol.cc" target="_blank" rel="noopener">Billing Login</a>
+                <a href="https://panel.gamecontrol.cc" target="_blank" rel="noopener">Panel Login</a>
+                <a href="https://billing.gamecontrol.cc" target="_blank" rel="noopener">Billing Login</a>
             </div>
-            <button class="btn mobile-cta" onclick="window.location.href='https://billing.gamecontrol.cc'">Get Started</button>
+            <button class="btn nav-cta" onclick="window.location.href='https://billing.gamecontrol.cc'">Get Started</button>
         </nav>
         <div class="hero-content">
             <div class="hero-text">
@@ -245,6 +250,26 @@
         </div>
         <p class="footer-meta">Â© <span id="year"></span> GameControl. All rights reserved.</p>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navToggle = document.querySelector('.nav-toggle');
+            const navLinks = document.querySelector('.nav-links');
+            if (navToggle && navLinks) {
+                navToggle.addEventListener('click', () => {
+                    navLinks.classList.toggle('open');
+                    navToggle.classList.toggle('open');
+                });
+
+                navLinks.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        navLinks.classList.remove('open');
+                        navToggle.classList.remove('open');
+                    });
+                });
+            }
+        });
+    </script>
 
     <script>
         const BILLING_BASE_URL = window.__GC_BILLING_BASE || 'https://billing.gamecontrol.cc';
