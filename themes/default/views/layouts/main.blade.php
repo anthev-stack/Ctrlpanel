@@ -6,7 +6,6 @@
 @php($general_settings = app(App\Settings\GeneralSettings::class))
 @php($discord_settings = app(App\Settings\DiscordSettings::class))
 @php($creditBalanceFormatted = $creditBalanceFormatted ?? Currency::formatForDisplay(Auth::user()->credits))
-    @use('App\Constants\PermissionGroups')
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
