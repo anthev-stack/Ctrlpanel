@@ -79,6 +79,7 @@
     $hasAdminSidebar = Auth::check() && Auth::user() ? Auth::user()->hasAnyPermission($adminPermissionSets) : false;
 @endphp
 @php
+    $ticket_enabled = $ticket_enabled ?? false;
     $show_store = $show_store ?? false;
     $hasAdminSidebar = $hasAdminSidebar ?? false;
 @endphp
