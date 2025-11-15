@@ -53,45 +53,74 @@
     @vite('themes/default/sass/app.scss')
 </head>
 
-<body class="sidebar-mini layout-fixed dark-mode" style="height: auto;">
+@php
+    use App\Constants\PermissionGroups;
+    $ticket_settings = app(App\Settings\TicketSettings::class);
+    $ticket_enabled = $ticket_settings->enabled;
+    $show_store = config('app.env') === 'local' || app(App\Settings\GeneralSettings::class)->store_enabled;
+    $adminPermissionSets = array_merge(
+        PermissionGroups::OVERVIEW_PERMISSIONS,
+        PermissionGroups::TICKET_ADMIN_PERMISSIONS,
+        PermissionGroups::TICKET_BLACKLIST_PERMISSIONS,
+        PermissionGroups::ROLES_PERMISSIONS,
+        PermissionGroups::SETTINGS_PERMISSIONS,
+        PermissionGroups::API_PERMISSIONS,
+        PermissionGroups::USERS_PERMISSIONS,
+        PermissionGroups::SERVERS_PERMISSIONS,
+        PermissionGroups::PRODUCTS_PERMISSIONS,
+        PermissionGroups::STORE_PERMISSIONS,
+        PermissionGroups::VOUCHERS_PERMISSIONS,
+        PermissionGroups::PARTNERS_PERMISSIONS,
+        PermissionGroups::COUPONS_PERMISSIONS,
+        PermissionGroups::USEFUL_LINKS_PERMISSIONS,
+        PermissionGroups::PAYMENTS_PERMISSIONS,
+        PermissionGroups::LOGS_PERMISSIONS
+    );
+    $hasAdminSidebar = Auth::user()->hasAnyPermission($adminPermissionSets);
+@endphp
+<body class="sidebar-mini layout-fixed dark-mode {{ $hasAdminSidebar ? '' : 'sidebar-collapse no-admin-sidebar' }}" style="height: auto;">
 <div class="wrapper">
     <!-- Navbar -->
-    <nav class="main-header sticky-top navbar navbar-expand navbar-dark navbar-light">
-        <!-- Left navbar links -->
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i
-                            class="fas fa-bars"></i></a>
-            </li>
-            <li class="nav-item d-none d-sm-inline-block">
-                <a href="{{ route('home') }}" class="nav-link"><i
-                            class="mr-2 fas fa-home"></i>{{ __('Home') }}</a>
-            </li>
+    <nav class="main-header sticky-top gc-top-nav navbar navbar-expand">
+        <div class="gc-top-left">
+            @if($hasAdminSidebar)
+                <button class="gc-menu-toggle" data-widget="pushmenu" type="button" aria-label="Toggle admin menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            @endif
+            <div class="gc-brand">
+                <span class="gc-brand-title">{{ \Illuminate\Support\Str::upper(config('app.name', 'Gamecontrol')) }}</span>
+                <small>{{ __('Billing Panel') }}</small>
+            </div>
+        </div>
 
-            @foreach ($useful_links as $link)
-                <li class="nav-item d-none d-sm-inline-block">
-                    <a href="{{ $link->link }}" class="nav-link" target="__blank"><i
-                                class="{{ $link->icon }}"></i> {{ $link->title }}</a>
-                </li>
-            @endforeach
-        </ul>
+        <div class="gc-top-links">
+            <a class="gc-link {{ Request::routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">{{ __('Dashboard') }}</a>
+            <a class="gc-link {{ Request::routeIs('servers.*') ? 'active' : '' }}" href="{{ route('servers.index') }}">{{ __('Servers') }}</a>
+            @if ($show_store)
+                <a class="gc-link {{ (Request::routeIs('store.*') || Request::routeIs('checkout')) ? 'active' : '' }}" href="{{ route('store.index') }}">{{ __('Store') }}</a>
+            @endif
+            @if ($ticket_enabled && Auth::user()->canAny(PermissionGroups::TICKET_PERMISSIONS))
+                <a class="gc-link {{ Request::routeIs('ticket.*') ? 'active' : '' }}" href="{{ route('ticket.index') }}">{{ __('Support Tickets') }}</a>
+            @endif
+        </div>
 
-        <!-- Right navbar links -->
-        <ul class="ml-auto navbar-nav">
-
-            <li class="nav-item dropdown">
-                <a class="px-2 nav-link" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+        <div class="gc-top-actions ml-auto navbar-nav">
+            <div class="nav-item dropdown gc-credit-dropdown">
+                <a class="nav-link" href="#" id="creditDropdown" role="button" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
-                        <span class="mr-1 text-gray-600 d-lg-inline">
-                            <small><i class="mr-2 fas fa-coins"></i></small>{{ Currency::formatForDisplay(Auth::user()->credits) }}
-                        </span>
+                    <span>
+                        <small><i class="mr-2 fas fa-coins"></i></small>{{ Currency::formatForDisplay(Auth::user()->credits) }}
+                    </span>
                 </a>
                 <div class="shadow dropdown-menu dropdown-menu-right animated--grow-in"
-                     aria-labelledby="userDropdown">
-                    <a class="dropdown-item" href="{{ route('store.index') }}">
-                        <i class="mr-2 text-gray-400 fas fa-coins fa-sm fa-fw"></i>
-                        {{ __('Store') }}
-                    </a>
+                     aria-labelledby="creditDropdown">
+                    @if ($show_store)
+                        <a class="dropdown-item" href="{{ route('store.index') }}">
+                            <i class="mr-2 text-gray-400 fas fa-coins fa-sm fa-fw"></i>
+                            {{ __('Store') }}
+                        </a>
+                    @endif
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" data-toggle="modal" data-target="#redeemVoucherModal"
                        href="javascript:void(0)">
@@ -99,10 +128,10 @@
                         {{ __('Redeem code') }}
                     </a>
                 </div>
-            </li>
+            </div>
 
-            <li class="nav-item dropdown no-arrow">
-                <a class="px-2 nav-link dropdown-toggle no-arrow" href="#" id="userDropdown" role="button"
+            <div class="nav-item dropdown no-arrow">
+                <a class="nav-link dropdown-toggle no-arrow" href="#" id="userDropdown" role="button"
                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="mr-1 text-gray-600 d-lg-inline small">
                             {{ Auth::user()->name }}
@@ -115,7 +144,6 @@
                             @endif
                         </span>
                 </a>
-                <!-- Dropdown - User Information -->
                 <div class="shadow dropdown-menu dropdown-menu-right animated--grow-in"
                      aria-labelledby="userDropdown">
                     <a class="dropdown-item" href="{{ route('profile.index') }}">
@@ -135,10 +163,6 @@
                         <i class="mr-2 text-gray-400 fas fa-cog fa-sm fa-fw"></i>
                         {{ __('Preferences') }}
                     </a>
-                    {{-- <a class="dropdown-item" href="#"> --}}
-                    {{-- <i class="mr-2 text-gray-400 fas fa-list fa-sm fa-fw"></i> --}}
-                    {{-- Activity Log --}}
-                    {{-- </a> --}}
                     @if (session()->get('previousUser'))
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ route('users.logbackin') }}">
@@ -154,15 +178,15 @@
                             <i class="mr-2 text-gray-400 fas fa-sign-out-alt fa-sm fa-fw"></i>
                             {{ __('Logout') }}
                         </button>
-
                         <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     </form>
                 </div>
-            </li>
-        </ul>
+            </div>
+        </div>
     </nav>
     <!-- /.navbar -->
     <!-- Main Sidebar Container -->
+    @if($hasAdminSidebar)
     <aside class="main-sidebar sidebar-open sidebar-dark-primary elevation-4">
         <!-- Brand Logo -->
         <a href="{{ route('home') }}" class="brand-link">
@@ -172,7 +196,7 @@
                  style="opacity: .95">
             <span class="brand-text">
                 <span>{{ \Illuminate\Support\Str::upper(config('app.name', 'Gamecontrol')) }}</span>
-                <small>Command Centre</small>
+                <small>{{ __('Billing Panel') }}</small>
             </span>
         </a>
 
@@ -185,47 +209,6 @@
                     data-accordion="false">
                     <!-- Add icons to the links using the .nav-icon class
                      with font-awesome or any other icon font library -->
-                    <li class="nav-item">
-                        <a href="{{ route('home') }}"
-                           class="nav-link @if (Request::routeIs('home')) active @endif">
-                            <i class="nav-icon fa fa-home"></i>
-                            <p>{{ __('Dashboard') }}</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{{ route('servers.index') }}"
-                           class="nav-link @if (Request::routeIs('servers.*')) active @endif">
-                            <i class="nav-icon fa fa-server"></i>
-                            <p>{{ __('Servers') }}
-                                <span class="badge badge-info right">{{ Auth::user()->servers()->count() }} /
-                                        {{ Auth::user()->server_limit }}</span>
-                            </p>
-                        </a>
-                    </li>
-
-                    @if (config('app.env') == 'local' || $general_settings->store_enabled)
-                        <li class="nav-item">
-                            <a href="{{ route('store.index') }}"
-                               class="nav-link @if (Request::routeIs('store.*') || Request::routeIs('checkout')) active @endif">
-                                <i class="nav-icon fa fa-coins"></i>
-                                <p>{{ __('Store') }}</p>
-                            </a>
-                        </li>
-                    @endif
-                    @php($ticket_enabled = app(App\Settings\TicketSettings::class)->enabled)
-                    @if ($ticket_enabled)
-                        @canany(PermissionGroups::TICKET_PERMISSIONS)
-                            <li class="nav-item">
-                                <a href="{{ route('ticket.index') }}"
-                                   class="nav-link @if (Request::routeIs('ticket.*')) active @endif">
-                                    <i class="nav-icon fas fa-ticket-alt"></i>
-                                    <p>{{ __('Support Ticket') }}</p>
-                                </a>
-                            </li>
-                        @endcanany
-                    @endif
-
                     @canany(array_merge(
                         PermissionGroups::TICKET_PERMISSIONS,
                         PermissionGroups::OVERVIEW_PERMISSIONS,
@@ -435,6 +418,7 @@
         </div>
         <!-- /.sidebar -->
     </aside>
+    @endif
 
     <!-- Content Wrapper. Contains page content -->
 

@@ -8,45 +8,112 @@
 @import "../css/slim.min.css";
 
 :root {
-    --gc-bg: #030514;
-    --gc-panel-bg: #060818;
-    --gc-panel-elevated: rgba(8, 11, 31, 0.92);
-    --gc-card-bg: rgba(13, 16, 30, 0.95);
-    --gc-border: rgba(99, 102, 241, 0.25);
+    --gc-bg: #04071c;
+    --gc-panel-bg: #0b1030;
+    --gc-panel-elevated: #111735;
+    --gc-card-bg: #141b3f;
+    --gc-border: rgba(99, 102, 241, 0.18);
     --gc-accent: #6366f1;
     --gc-accent-dark: #4f46e5;
     --gc-text: #f4f6ff;
-    --gc-muted: rgba(226, 232, 240, 0.7);
+    --gc-muted: rgba(226, 232, 240, 0.65);
 }
 
 body,
 .dark-mode body {
     font-family: 'Inter', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: radial-gradient(circle at top, rgba(79, 70, 229, 0.35), rgba(8, 11, 31, 0.95));
-    background-color: var(--gc-panel-bg);
+    background-color: var(--gc-bg);
     color: var(--gc-text);
 }
 
 .dark-mode .wrapper,
-.dark-mode .content-wrapper,
-.dark-mode .main-footer,
-.dark-mode .main-sidebar {
+.dark-mode .main-footer {
     background-color: transparent;
 }
 
 .dark-mode .content-wrapper {
-    background: transparent;
+    background: var(--gc-panel-bg);
+    border-top: 1px solid rgba(255, 255, 255, 0.02);
+    min-height: calc(100vh - 80px);
 }
 
-.main-header.navbar {
-    background: rgba(6, 8, 24, 0.85);
-    border-bottom: 1px solid var(--gc-border);
-    backdrop-filter: blur(18px);
+.main-header.navbar.gc-top-nav {
+    background: linear-gradient(90deg, #090f2c 0%, #111a45 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    padding: 0.85rem 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.no-admin-sidebar .main-header {
+    margin-left: 0 !important;
+}
+
+.gc-top-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.gc-menu-toggle {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: transparent;
+    color: var(--gc-text);
+    border-radius: 8px;
+    padding: 0.45rem 0.65rem;
+}
+
+.gc-menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.gc-brand {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.gc-brand-title {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.gc-top-links {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+}
+
+.gc-link {
+    color: var(--gc-muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.gc-link.active,
+.gc-link:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.gc-top-actions .nav-link span {
+    color: #fff;
 }
 
 .main-sidebar {
-    background: rgba(4, 6, 18, 0.95);
-    border-right: 1px solid rgba(99, 102, 241, 0.15);
+    background: #080c23;
+    border-right: 1px solid rgba(99, 102, 241, 0.12);
 }
 
 .main-sidebar .nav-sidebar > .nav-item > .nav-link {
@@ -81,6 +148,10 @@ body,
     font-size: 0.55rem;
     letter-spacing: 0.4em;
     color: var(--gc-muted);
+}
+
+.content-wrapper .content {
+    padding: 1.5rem;
 }
 
 .content-header h1,
@@ -156,8 +227,8 @@ body,
 }
 
 .small-box {
-    background: var(--gc-card-bg);
-    border: 1px solid var(--gc-border);
+    background: var(--gc-panel-elevated);
+    border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .small-box .icon > i {
@@ -168,6 +239,52 @@ body,
     background-color: rgba(99, 102, 241, 0.1);
     border-color: rgba(99, 102, 241, 0.2);
     color: var(--gc-text);
+}
+
+.no-admin-sidebar .main-sidebar {
+    display: none;
+}
+
+.no-admin-sidebar .content-wrapper,
+.no-admin-sidebar .main-header {
+    margin-left: 0 !important;
+}
+
+.main-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: #070b20;
+    color: var(--gc-muted);
+}
+
+.gc-credit-dropdown .dropdown-menu {
+    background: #0f1735;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gc-credit-dropdown .dropdown-item {
+    color: #fff;
+}
+
+.gc-credit-dropdown .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 992px) {
+    .gc-top-nav {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .gc-top-links {
+        flex-wrap: wrap;
+    }
+
+    .gc-top-actions {
+        width: 100%;
+        justify-content: flex-end;
+        display: flex;
+        gap: 0.5rem;
+    }
 }
 
 .checkout-gateways {
