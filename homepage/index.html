@@ -14,7 +14,10 @@
 <body>
     <header class="hero">
         <nav class="nav">
-            <div class="logo">GameControl</div>
+            <div class="logo">
+                <span>GameControl</span>
+                <small>Command Centre</small>
+            </div>
             <button class="nav-toggle" type="button" aria-label="Toggle navigation">
                 <span></span>
                 <span></span>
@@ -83,7 +86,7 @@
     </section>
 
     <div x-data="configureApp()" x-init="init()">
-    <section id="servers" class="section section-alt">
+    <section id="servers" class="section">
             <h2>Servers</h2>
             <p class="section-lead">Pick a default build or configure it your way.</p>
             <div class="grid grid-3" x-show="plans.length">

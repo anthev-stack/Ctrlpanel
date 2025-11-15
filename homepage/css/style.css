@@ -181,10 +181,24 @@ a {
 }
 
 .logo {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.logo span {
     font-size: 1.35rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+}
+
+.logo small {
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.8);
+    font-weight: 500;
 }
 
 .nav-drawer {
@@ -339,12 +353,6 @@ a {
     margin-bottom: 2.5rem;
 }
 
-.section-alt {
-    background: rgba(14, 17, 38, 0.6);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-}
-
 .grid {
     display: grid;
     gap: 1.75rem;
@@ -428,7 +436,7 @@ a {
     background: var(--primary);
     color: #fff;
     padding: 0.8rem 1.6rem;
-    border-radius: 0.55rem;
+    border-radius: 2px;
     font-weight: 600;
     font-size: 0.95rem;
     border: none;
