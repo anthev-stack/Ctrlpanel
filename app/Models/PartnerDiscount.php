@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PartnerDiscount extends Model
 {
@@ -20,14 +21,20 @@ class PartnerDiscount extends Model
 
     public static function getDiscount(int $user_id = null)
     {
-        if ($partnerDiscount = PartnerDiscount::where('user_id', $user_id ?? Auth::user()->id)->first()) {
-            return $partnerDiscount->partner_discount;
-        } elseif ($ref_user = DB::table('user_referrals')->where('registered_user_id', '=', $user_id ?? Auth::user()->id)->first()) {
-            if ($partnerDiscount = PartnerDiscount::where('user_id', $ref_user->referral_id)->first()) {
-                return $partnerDiscount->registered_user_discount;
-            }
-
+        if (!Schema::hasTable('partner_discounts')) {
             return 0;
+        }
+
+        $targetUserId = $user_id ?? Auth::user()->id;
+
+        if ($partnerDiscount = PartnerDiscount::where('user_id', $targetUserId)->first()) {
+            return $partnerDiscount->partner_discount;
+        } elseif (Schema::hasTable('user_referrals')) {
+            if ($ref_user = DB::table('user_referrals')->where('registered_user_id', '=', $targetUserId)->first()) {
+                if ($partnerDiscount = PartnerDiscount::where('user_id', $ref_user->referral_id)->first()) {
+                    return $partnerDiscount->registered_user_discount;
+                }
+            }
         }
 
         return 0;
@@ -35,6 +42,10 @@ class PartnerDiscount extends Model
 
     public static function getCommission($user_id, $percentage)
     {
+        if (!Schema::hasTable('partner_discounts')) {
+            return $percentage;
+        }
+
         if ($partnerDiscount = PartnerDiscount::where('user_id', $user_id)->first()) {
             if ($partnerDiscount->referral_system_commission >= 0) {
                 return $partnerDiscount->referral_system_commission >= 0;

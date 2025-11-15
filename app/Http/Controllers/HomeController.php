@@ -10,6 +10,7 @@ use App\Settings\ReferralSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 
@@ -188,14 +189,26 @@ class HomeController extends Controller
                 // $timeLeft['simulation'] = $calculation['simulation_steps'];
             }
         }
+        $usefulLinks = Schema::hasTable('useful_links')
+            ? UsefulLink::where("position","like","%dashboard%")->get()->sortBy("id")
+            : collect();
+
+        $referralCount = Schema::hasTable('user_referrals')
+            ? DB::table('user_referrals')->where('referral_id', '=', $user->id)->count()
+            : 0;
+
+        $partnerDiscount = Schema::hasTable('partner_discounts')
+            ? PartnerDiscount::where('user_id', $user->id)->first()
+            : null;
+
         return view('home')->with([
             'usage' => $user->creditUsage(),
             'credits' => $credits,
-            'useful_links_dashboard' => UsefulLink::where("position","like","%dashboard%")->get()->sortby("id"),
+            'useful_links_dashboard' => $usefulLinks,
             'timeLeft' => $timeLeft,
-            'numberOfReferrals' => DB::table('user_referrals')->where('referral_id', '=', $user->id)->count(),
-            'partnerDiscount' => PartnerDiscount::where('user_id', $user->id)->first(),
-            'myDiscount' => PartnerDiscount::getDiscount(),
+            'numberOfReferrals' => $referralCount,
+            'partnerDiscount' => $partnerDiscount,
+            'myDiscount' => Schema::hasTable('partner_discounts') ? PartnerDiscount::getDiscount() : 0,
             'general_settings' => $general_settings,
             'website_settings' => $website_settings,
             'referral_settings' => $referral_settings
