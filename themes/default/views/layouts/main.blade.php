@@ -76,12 +76,7 @@
         PermissionGroups::PAYMENTS_PERMISSIONS,
         PermissionGroups::LOGS_PERMISSIONS
     );
-    $hasAdminSidebar = Auth::check() && Auth::user() ? Auth::user()->hasAnyPermission($adminPermissionSets) : false;
-@endphp
-@php
-    $ticket_enabled = $ticket_enabled ?? false;
-    $show_store = $show_store ?? false;
-    $hasAdminSidebar = $hasAdminSidebar ?? false;
+    $hasAdminSidebar = Auth::user()->hasAnyPermission($adminPermissionSets);
 @endphp
 <body class="sidebar-mini layout-fixed dark-mode {{ $hasAdminSidebar ? '' : 'sidebar-collapse no-admin-sidebar' }}" style="height: auto;">
 <div class="wrapper">
