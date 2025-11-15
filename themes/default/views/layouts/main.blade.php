@@ -58,6 +58,7 @@
     $ticket_settings = app(App\Settings\TicketSettings::class);
     $ticket_enabled = $ticket_settings->enabled;
     $show_store = config('app.env') === 'local' || app(App\Settings\GeneralSettings::class)->store_enabled;
+    $user = Auth::user();
     $adminPermissionSets = array_merge(
         PermissionGroups::OVERVIEW_PERMISSIONS,
         PermissionGroups::TICKET_ADMIN_PERMISSIONS,
@@ -76,7 +77,7 @@
         PermissionGroups::PAYMENTS_PERMISSIONS,
         PermissionGroups::LOGS_PERMISSIONS
     );
-    $hasAdminSidebar = Auth::user()->hasAnyPermission($adminPermissionSets);
+    $hasAdminSidebar = $user ? $user->hasAnyPermission($adminPermissionSets) : false;
 @endphp
 <body class="sidebar-mini layout-fixed dark-mode {{ $hasAdminSidebar ? '' : 'sidebar-collapse no-admin-sidebar' }}" style="height: auto;">
 <div class="wrapper">
