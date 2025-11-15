@@ -166,11 +166,14 @@
     <aside class="main-sidebar sidebar-open sidebar-dark-primary elevation-4">
         <!-- Brand Logo -->
         <a href="{{ route('home') }}" class="brand-link">
-            <img width="64" height="64"
+            <img width="48" height="48"
                  src="{{ \Illuminate\Support\Facades\Storage::disk('public')->exists('icon.png') ? asset('storage/icon.png') : asset('images/ctrlpanel_logo.png') }}"
-                 alt="{{ config('app.name', 'Laravel') }} Logo" class="brand-image img-circle"
-                 style="opacity: .8">
-            <span class="brand-text font-weight-light">{{ config('app.name', 'CtrlPanel.gg') }}</span>
+                 alt="{{ config('app.name', 'Laravel') }} Logo" class="brand-image img-circle elevation-2"
+                 style="opacity: .95">
+            <span class="brand-text">
+                <span>{{ \Illuminate\Support\Str::upper(config('app.name', 'Gamecontrol')) }}</span>
+                <small>Command Centre</small>
+            </span>
         </a>
 
         <!-- Sidebar -->
